@@ -1,0 +1,9 @@
+{
+    "MyVerticle": {
+        "use-ssl": true,
+        "jks": {
+            "keystore": "certificates/server-keystore.jks",
+            "passphrase": "helloworld"
+        }
+    }
+}
