@@ -64,6 +64,18 @@
             <version>${vertx.version}</version>
         </dependency>
 
+        <!-- Async JDBC -->
+        <dependency>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-jdbc-client</artifactId>
+            <version>${vertx.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.mariadb.jdbc</groupId>
+            <artifactId>mariadb-java-client</artifactId>
+            <version>RELEASE</version>
+        </dependency>
+
         <!-- Tests -->
         <dependency>
             <groupId>io.vertx</groupId>

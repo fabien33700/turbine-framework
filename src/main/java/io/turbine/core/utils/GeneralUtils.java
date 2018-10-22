@@ -1,12 +1,10 @@
 package io.turbine.core.utils;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 
 public class GeneralUtils {
@@ -55,6 +53,26 @@ public class GeneralUtils {
         }
         Collections.reverse(hierarchy);
         return hierarchy;
+    }
+
+    public static String getStackTraceAsString(Throwable t) {
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        t.printStackTrace(pw);
+        return sw.toString();
+    }
+
+    public static String format(final String format, final Object... args) {
+        final String Separator = "{}";
+        Iterator<Object> itArgs = asList(args).iterator();
+        String buffer = format;
+        while (itArgs.hasNext() && buffer.contains(Separator)) {
+            Object arg = itArgs.next();
+            String repr = (arg != null) ? arg.toString() : "";
+            int pos = buffer.indexOf(Separator);
+            buffer = buffer.substring(0, pos) + repr + buffer.substring(pos + Separator.length());
+        }
+        return buffer;
     }
 
 }

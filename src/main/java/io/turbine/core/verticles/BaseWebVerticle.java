@@ -2,13 +2,32 @@ package io.turbine.core.verticles;
 
 import io.reactivex.Single;
 import io.reactivex.functions.Consumer;
+import io.turbine.core.errors.exceptions.http.HttpException;
+import io.turbine.core.errors.exceptions.http.ServerErrorException;
+import io.turbine.core.errors.handling.RxExceptionHandler;
+import io.turbine.core.json.JsonSource;
+import io.turbine.core.model.web.handlers.RequestHandler;
+import io.turbine.core.model.web.handlers.ResponseAdapter;
+import io.turbine.core.model.web.handlers.ResponsePrinter;
+import io.turbine.core.model.web.handlers.RxRequestHandler;
 import io.turbine.core.model.web.router.ReactiveRouter;
+import io.turbine.core.model.web.router.Response;
+import io.turbine.core.utils.JsonBuilder;
 import io.turbine.core.verticles.behaviors.WebVerticle;
 import io.vertx.core.Context;
 import io.vertx.core.Vertx;
+import io.vertx.core.json.Json;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 import io.vertx.reactivex.core.http.HttpServer;
 import io.vertx.reactivex.ext.web.Router;
+import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.ext.web.handler.BodyHandler;
+
+import static io.netty.handler.codec.http.HttpResponseStatus.valueOf;
+import static io.reactivex.Single.just;
+import static io.turbine.core.utils.JsonBuilder.create;
+
 
 /**
  * Defines a base implementation for all Web verticles in the application.
@@ -54,6 +73,7 @@ public abstract class BaseWebVerticle extends BaseHttpVerticle implements WebVer
      */
     private ReactiveRouter router;
 
+
     /**
      * {@inheritDoc}
      */
@@ -91,4 +111,92 @@ public abstract class BaseWebVerticle extends BaseHttpVerticle implements WebVer
         return server -> logger.info("Server started listening at port " + server.actualPort());
     }
 
+    /**************************
+     *  Response methods
+     */
+
+    private JsonObject getHttpErrorAsJson(HttpException ex) {
+        JsonBuilder builder = create()
+                .put("message", ex.getMessage())
+                .put("type", ex.getClass().getSimpleName())
+                .put("instant", ex.getInstant())
+                .put("code", ex.statusCode())
+                .put("reason", valueOf(ex.statusCode()).reasonPhrase());
+
+        if (ex instanceof ServerErrorException)
+            builder.put("uuid", ((ServerErrorException) ex).getUuid());
+
+        return builder.build();
+    }
+
+    protected Consumer<RoutingContext>
+    rxJsonResponse(RxRequestHandler<JsonSource> rxRequestHandler)
+    {
+        return rxResponse(
+                ResponseAdapter.jsonAdapter(),
+                JsonSource::encode,
+                rxRequestHandler);
+    }
+
+    protected Consumer<RoutingContext>
+    jsonResponse(RequestHandler<JsonSource> requestHandler)
+    {
+        return response(
+                ResponseAdapter.jsonAdapter(),
+                Json::encodePrettily,
+                requestHandler);
+    }
+
+    private <Rp> Consumer<RoutingContext>
+    response(ResponseAdapter adapter,
+             ResponsePrinter<Rp> printer,
+             RequestHandler<Rp> requestHandler) {
+        return rc -> {
+            Response<Rp> response = requestHandler.apply(rc);
+
+            adapter.accept(rc.response());
+            writeResponse(rc, printer.apply(response.body()), response.statusCode());
+        };
+    }
+
+    private <Rp> Consumer<RoutingContext>
+    rxResponse(ResponseAdapter adapter,
+             ResponsePrinter<Rp> printer,
+             RxRequestHandler<Rp> rxRequestHandler) {
+        return rc -> {
+            Single<Response<Rp>> response = rxRequestHandler.apply(rc);
+
+            adapter.accept(rc.response());
+            response.subscribe(rp ->
+                    writeResponse(rc, printer.apply(rp.body()), rp.statusCode()));
+        };
+    }
+
+    private void writeResponse(RoutingContext rc, String body, int statusCode) {
+        rc  .response()
+            .setStatusCode(statusCode)
+            .end(body);
+    }
+
+    /*
+     * Exception Handlers
+     */
+
+    protected Single<Response<JsonSource>> handleException(Throwable t)  {
+        try {
+            try {
+                throw t;
+            } catch (HttpException httpEx) {
+                throw httpEx;
+            } catch (Throwable internalEx) {
+                throw new ServerErrorException(internalEx);
+            }
+        } catch (HttpException httpEx) {
+            if (httpEx instanceof ServerErrorException)
+                unhandledExceptions.onNext(httpEx);
+
+            return just(
+                    new Response<>(JsonSource.from(getHttpErrorAsJson(httpEx)), httpEx.statusCode()));
+        }
+    }
 }

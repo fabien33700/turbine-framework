@@ -220,12 +220,8 @@ public final class Logger implements org.slf4j.Logger {
         delegate.warn(resolver.getMessage(msg), t);
     }
 
-    public boolean isWarnEnabled(Marker marker) {
-        return delegate.isWarnEnabled(marker);
-    }
-
-    public boolean isErrorEnabled(Marker marker) {
-        return delegate.isErrorEnabled(marker);
+    public void warn(Throwable t) {
+        delegate.warn(t.getMessage(), t);
     }
 
     public boolean isErrorEnabled() {
@@ -252,7 +248,17 @@ public final class Logger implements org.slf4j.Logger {
         delegate.error(resolver.getMessage(msg), t);
     }
 
-    /*** We will not used these methods so we just declare neutral delegates ***/
+    /**
+     * Simply log a Throwable.
+     * Use as method reference for functionnal or reactive operators.
+     *
+     * @param t The throwable to log
+     */
+    public void error(Throwable t) {
+        delegate.error(t.getMessage(), t);
+    }
+
+    /*** We will not use these methods so we just declare neutral delegates ***/
 
     public boolean isTraceEnabled(Marker marker) {
         return delegate.isTraceEnabled(marker);
@@ -264,6 +270,14 @@ public final class Logger implements org.slf4j.Logger {
 
     public boolean isInfoEnabled(Marker marker) {
         return delegate.isInfoEnabled(marker);
+    }
+
+    public boolean isWarnEnabled(Marker marker) {
+        return delegate.isWarnEnabled(marker);
+    }
+
+    public boolean isErrorEnabled(Marker marker) {
+        return delegate.isErrorEnabled(marker);
     }
 
 }

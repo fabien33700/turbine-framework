@@ -1,8 +1,13 @@
 package io.turbine.core.verticles;
 
+import io.reactivex.BackpressureStrategy;
+import io.reactivex.Flowable;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.subjects.BehaviorSubject;
+import io.reactivex.subjects.Subject;
 import io.turbine.core.configuration.Dispatcher;
 import io.turbine.core.configuration.Reader;
+import io.turbine.core.errors.exceptions.verticles.InitializationException;
 import io.turbine.core.logging.Logger;
 import io.turbine.core.logging.LoggerFactory;
 import io.vertx.core.Context;
@@ -28,6 +33,8 @@ import java.util.NoSuchElementException;
  */
 public abstract class BaseVerticle extends AbstractVerticle {
 
+    protected Subject<Throwable> unhandledExceptions = BehaviorSubject.create();
+
     /**
      * The verticle logger instance
      */
@@ -52,7 +59,14 @@ public abstract class BaseVerticle extends AbstractVerticle {
     public void init(Vertx vertx, Context context) {
         super.init(vertx, context);
         reader = new Reader(config());
-        this.init();
+        try {
+            init();
+            unhandledExceptions().subscribe(
+                    t -> logger.error("Unhandled exception caught", t));
+        } catch (Exception ex) {
+            // Catching exceptions that occured during initialization
+            throw new InitializationException(ex, this);
+        }
     }
 
     @Override
@@ -107,5 +121,9 @@ public abstract class BaseVerticle extends AbstractVerticle {
     /**
      * A method that will be executed before the deployment of the verticle.
      */
-    protected void init() {}
+    protected void init() throws Exception {}
+
+    public Flowable<Throwable> unhandledExceptions() {
+        return unhandledExceptions.toFlowable(BackpressureStrategy.DROP);
+    }
 }

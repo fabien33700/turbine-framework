@@ -5,6 +5,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
+import static io.turbine.core.utils.GeneralUtils.format;
+
 import static java.util.Objects.requireNonNull;
 
 public class MessageResolver {
@@ -93,16 +95,5 @@ public class MessageResolver {
         }
 
         return format(messages.getProperty(key), args);
-    }
-
-    private String format(final String format, final Object... args) {
-        Iterator<Object> itArgs = Arrays.asList(args).iterator();
-        String buffer = format;
-        while (itArgs.hasNext() && format.contains("{}")) {
-            Object arg = itArgs.next();
-            String repr = (arg != null) ? arg.toString() : "";
-            buffer = buffer.replaceFirst("\\{}", repr);
-        }
-        return buffer;
     }
 }
