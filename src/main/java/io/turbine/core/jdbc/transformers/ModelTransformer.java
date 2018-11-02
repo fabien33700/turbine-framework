@@ -2,6 +2,7 @@ package io.turbine.core.jdbc.transformers;
 
 
 import io.turbine.core.jdbc.ResultTransformer;
+import io.turbine.core.json.JsonSerializable;
 import io.vertx.core.json.JsonObject;
 
 import java.util.HashMap;
@@ -13,34 +14,11 @@ import java.util.function.Supplier;
 
 import static java.util.Objects.requireNonNull;
 
-public class ModelTransformer<M> implements ResultTransformer<M> {
+public class ModelTransformer<M extends JsonSerializable> implements ResultTransformer<M> {
 
-    interface Property<M> {
-        Function<M, Object> getter();
-        BiConsumer<M, Object> setter();
-    }
+    public interface Setter<M> extends BiConsumer<M, Object> {}
 
-    class PropertyImpl<M> implements Property<M> {
-        private final Function<M, Object> getter;
-        private final BiConsumer<M, Object> setter;
-
-        PropertyImpl(Function<M, Object> getter, BiConsumer<M, Object> setter) {
-            this.getter = getter;
-            this.setter = setter;
-        }
-
-        @Override
-        public BiConsumer<M, Object> setter() {
-            return setter;
-        }
-
-        @Override
-        public Function<M, Object> getter() {
-            return getter;
-        }
-    }
-
-    private final Map<String, Property<M>> bindings;
+    private final Map<String, Setter<M>> bindings;
 
     private final Supplier<M> factory;
 
@@ -51,26 +29,16 @@ public class ModelTransformer<M> implements ResultTransformer<M> {
     }
 
     public ModelTransformer<M> bind(String propertyName,
-                                    Function<M, Object> getter,
-                                    BiConsumer<M, Object> setter)
+                                    Setter<M> setter)
     {
-        requireNonNull(getter, "The property getter could not be null");
         requireNonNull(setter, "The property setter could not be null");
 
         if (propertyName == null || propertyName.trim().isEmpty()) {
             throw new IllegalArgumentException("The property name could not be null nor empty.");
         }
 
-        internalBind(propertyName, getter, setter);
+        bindings.put(propertyName, setter);
         return this;
-    }
-
-    private void internalBind(String propertyName,
-                              Function<M, Object> getter,
-                              BiConsumer<M, Object> setter)
-    {
-        Property<M> property = new PropertyImpl<>(getter, setter);
-        bindings.put(propertyName, property);
     }
 
     @Override
@@ -78,10 +46,9 @@ public class ModelTransformer<M> implements ResultTransformer<M> {
         M model = factory.get();
         Set<String> keys = json.getMap().keySet();
 
-        bindings.forEach((key, prop) -> {
+        bindings.forEach((key, setter) -> {
             if (!keys.contains(key)) return;
-
-            prop.setter().accept(model, json.getMap().get(key));
+            setter.accept(model, json.getMap().get(key));
         });
         return model;
     }

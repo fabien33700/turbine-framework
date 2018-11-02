@@ -3,8 +3,8 @@ package io.turbine.core.model.web.handlers;
 import io.reactivex.functions.Consumer;
 import io.vertx.reactivex.core.http.HttpServerResponse;
 
-import static io.turbine.core.model.Http.ContentTypes.APPLICATION_JSON;
-import static io.turbine.core.model.Http.ResponseHeaders.CONTENT_TYPE;
+import static io.turbine.core.model.HttpConstants.ContentTypes.APPLICATION_JSON;
+import static io.turbine.core.model.HttpConstants.ResponseHeaders.CONTENT_TYPE;
 
 public interface ResponseAdapter extends Consumer<HttpServerResponse> {
 

@@ -2,6 +2,7 @@ package io.turbine.core.utils;
 
 import java.io.*;
 import java.util.*;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static java.util.Arrays.asList;
@@ -75,4 +76,14 @@ public class GeneralUtils {
         return buffer;
     }
 
+    public static <E, C extends Collection<E>> C fromIterable(Iterable<E> items, Supplier<C> factory) {
+        C collection = factory.get();
+        items.forEach(collection::add);
+
+        return collection;
+    }
+
+    public static <E> List<E> fromIterable(Iterable<E> items) {
+        return fromIterable(items, ArrayList::new);
+    }
 }

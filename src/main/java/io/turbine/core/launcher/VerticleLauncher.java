@@ -12,27 +12,13 @@ import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import static io.turbine.core.utils.GeneralUtils.fromInputStream;
 import static io.vertx.reactivex.core.Vertx.vertx;
 
 public abstract class VerticleLauncher implements Runnable {
-
-    private Verticles verticles = new Verticles();
-
-    protected class Verticles {
-        private List<Class<?>> classes = new ArrayList<>();
-
-        public Verticles deploy(Class<?> verticleClass) {
-            classes.add(verticleClass);
-            return this;
-        }
-
-        private List<Class<?>> toDeploy() {
-            return classes;
-        }
-    }
 
     private static final String DEFAULT_CONFIG_PATH = "default.configuration.json";
 
@@ -53,8 +39,7 @@ public abstract class VerticleLauncher implements Runnable {
     }
 
     private void deployVerticles() {
-        toDeploy(verticles);
-        verticles.toDeploy().stream()
+        deploy().stream()
             .filter(this::checkVerticle)
             .forEach(this::deployVerticle);
     }
@@ -71,8 +56,7 @@ public abstract class VerticleLauncher implements Runnable {
         return AbstractVerticle.class.isAssignableFrom(verticleClass);
     }
 
-    //protected abstract Class<?>[] toDeploy();
-    protected abstract void toDeploy(Verticles verticles);
+    protected abstract Collection<Class> deploy();
 
     private JsonObject readConfiguration() {
         String configPath = getConfigurationPath();

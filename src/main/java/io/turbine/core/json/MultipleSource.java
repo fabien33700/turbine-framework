@@ -43,7 +43,7 @@ public class MultipleSource implements JsonSource {
     @Override
     public <T> Iterable<T> mapCollectionTo(Class<T> clazz) {
         return array.stream()
-                .map(item -> ((SingleSource)item).mapTo(clazz))
+                .map(item -> new SingleSource(item).mapTo(clazz))
                 .collect(Collectors.toList());
     }
 

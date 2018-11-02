@@ -1,6 +1,6 @@
 package io.turbine.core.model;
 
-public final class Http {
+public final class HttpConstants {
 
     public static class ContentTypes {
         public static final String APPLICATION_JSON = "application/json";

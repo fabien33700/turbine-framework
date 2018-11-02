@@ -1,4 +1,4 @@
-package io.turbine.core.utils.functional;
+package io.turbine.core.utils;
 
 import io.reactivex.functions.Function;
 
@@ -15,4 +15,7 @@ public class FnUtils {
             }
         };
     }
+
+    @FunctionalInterface
+    public interface UnaryOperator<T> extends Function<T, T> { }
 }
