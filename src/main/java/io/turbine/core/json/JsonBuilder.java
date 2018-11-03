@@ -1,4 +1,4 @@
-package io.turbine.core.utils;
+package io.turbine.core.json;
 
 import io.vertx.core.json.JsonObject;
 

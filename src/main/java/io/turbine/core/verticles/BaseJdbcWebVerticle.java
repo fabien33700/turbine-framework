@@ -1,7 +1,6 @@
 package io.turbine.core.verticles;
 
 import io.reactivex.Single;
-import io.reactivex.functions.Consumer;
 import io.turbine.core.jdbc.QueryBuilder;
 import io.turbine.core.verticles.behaviors.JdbcVerticle;
 import io.vertx.ext.sql.SQLOptions;

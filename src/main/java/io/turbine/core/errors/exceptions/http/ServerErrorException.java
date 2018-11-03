@@ -2,7 +2,7 @@ package io.turbine.core.errors.exceptions.http;
 
 import java.util.UUID;
 
-import static io.turbine.core.utils.GeneralUtils.getStackTraceAsString;
+import static io.turbine.core.utils.StringUtils.getStackTraceAsString;
 import static java.util.UUID.randomUUID;
 
 public class ServerErrorException extends HttpException {

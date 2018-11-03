@@ -1,11 +1,12 @@
 package io.turbine.core.utils;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 
 public class GeneralUtils {
@@ -56,25 +57,7 @@ public class GeneralUtils {
         return hierarchy;
     }
 
-    public static String getStackTraceAsString(Throwable t) {
-        StringWriter sw = new StringWriter();
-        PrintWriter pw = new PrintWriter(sw);
-        t.printStackTrace(pw);
-        return sw.toString();
-    }
 
-    public static String format(final String format, final Object... args) {
-        final String Separator = "{}";
-        Iterator<Object> itArgs = asList(args).iterator();
-        String buffer = format;
-        while (itArgs.hasNext() && buffer.contains(Separator)) {
-            Object arg = itArgs.next();
-            String repr = (arg != null) ? arg.toString() : "";
-            int pos = buffer.indexOf(Separator);
-            buffer = buffer.substring(0, pos) + repr + buffer.substring(pos + Separator.length());
-        }
-        return buffer;
-    }
 
     public static <E, C extends Collection<E>> C fromIterable(Iterable<E> items, Supplier<C> factory) {
         C collection = factory.get();

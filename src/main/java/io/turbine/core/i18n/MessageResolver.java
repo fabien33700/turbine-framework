@@ -3,10 +3,12 @@ package io.turbine.core.i18n;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Properties;
 
-import static io.turbine.core.utils.GeneralUtils.format;
-
+import static io.turbine.core.utils.StringUtils.format;
 import static java.util.Objects.requireNonNull;
 
 public class MessageResolver {

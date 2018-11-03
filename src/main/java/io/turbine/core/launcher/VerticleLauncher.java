@@ -11,9 +11,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 import static io.turbine.core.utils.GeneralUtils.fromInputStream;
 import static io.vertx.reactivex.core.Vertx.vertx;

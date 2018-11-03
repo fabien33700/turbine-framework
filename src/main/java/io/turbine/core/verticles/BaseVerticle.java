@@ -33,7 +33,7 @@ import java.util.NoSuchElementException;
  */
 public abstract class BaseVerticle extends AbstractVerticle {
 
-    protected Subject<Throwable> unhandledExceptions = BehaviorSubject.create();
+    protected Subject<Throwable> serverErrors = BehaviorSubject.create();
 
     /**
      * The verticle logger instance
@@ -61,8 +61,6 @@ public abstract class BaseVerticle extends AbstractVerticle {
         reader = new Reader(config());
         try {
             init();
-            unhandledExceptions().subscribe(
-                    t -> logger.error("Unhandled exception caught", t));
         } catch (Exception ex) {
             // Catching exceptions that occured during initialization
             throw new InitializationException(ex, this);
@@ -123,7 +121,7 @@ public abstract class BaseVerticle extends AbstractVerticle {
      */
     protected void init() throws Exception {}
 
-    public Flowable<Throwable> unhandledExceptions() {
-        return unhandledExceptions.toFlowable(BackpressureStrategy.DROP);
+    public Flowable<Throwable> serverErrors() {
+        return serverErrors.toFlowable(BackpressureStrategy.DROP);
     }
 }
