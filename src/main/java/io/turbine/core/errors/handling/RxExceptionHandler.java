@@ -4,5 +4,5 @@ import io.reactivex.Single;
 import io.reactivex.functions.Function;
 import io.turbine.core.web.router.Response;
 
-public interface RxExceptionHandler<Rp> extends Function<Throwable, Single<Response<Rp>>> {
+public interface RxExceptionHandler extends Function<Throwable, Single<Response>> {
 }

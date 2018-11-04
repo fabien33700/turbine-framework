@@ -1,17 +1,17 @@
 package io.turbine.core.web.router;
 
-public final class Response<R> {
-    private final R responseBody;
+public final class Response {
+    private final Object body;
 
     private final int statusCode;
 
-    public Response(R responseBody, int statusCode) {
-        this.responseBody = responseBody;
+    public Response(Object body, int statusCode) {
+        this.body = body;
         this.statusCode = statusCode;
     }
 
-    public R body() {
-        return responseBody;
+    public Object body() {
+        return body;
     }
 
     public int statusCode() {
@@ -19,79 +19,79 @@ public final class Response<R> {
     }
 
     /*** Factory methods ***/
-    public static <R> Response<R> ok(R responseBody) {
-        return new Response<>(responseBody, 200);
+    public static Response ok(Object body) {
+        return new Response(body, 200);
     }
 
-    public static <R> Response<R> created(R responseBody) {
-        return new Response<>(responseBody, 201);
+    public static Response created(Object body) {
+        return new Response(body, 201);
     }
 
-    public static <R> Response<R> accepted(R responseBody) {
-        return new Response<>(responseBody, 202);
+    public static Response accepted(Object body) {
+        return new Response(body, 202);
     }
 
-    public static <R> Response<R> noContent() {
-        return new Response<>(null, 204);
+    public static Response noContent() {
+        return new Response(null, 204);
     }
 
-    public static <R> Response<R> partialContent(R responseBody) {
-        return new Response<>(responseBody, 206);
+    public static Response partialContent(Object body) {
+        return new Response(body, 206);
     }
 
-    public static <R> Response<R> badRequest(R responseBody) {
-        return new Response<>(responseBody, 400);
+    public static Response badRequest(Object body) {
+        return new Response(body, 400);
     }
 
-    public static <R> Response<R> unauthorized(R responseBody) {
-        return new Response<>(responseBody, 401);
+    public static Response unauthorized(Object body) {
+        return new Response(body, 401);
     }
 
-    public static <R> Response<R> forbidden(R responseBody) {
-        return new Response<>(responseBody, 403);
+    public static Response forbidden(Object body) {
+        return new Response(body, 403);
     }
 
-    public static <R> Response<R> notFound(R responseBody) {
-        return new Response<>(responseBody, 404);
+    public static Response notFound(Object body) {
+        return new Response(body, 404);
     }
 
-    public static <R> Response<R> methodNotAllowed(R responseBody) {
-        return new Response<>(responseBody, 405);
+    public static Response methodNotAllowed(Object body) {
+        return new Response(body, 405);
     }
 
-    public static <R> Response<R> notAcceptable(R responseBody) {
-        return new Response<>(responseBody, 406);
+    public static Response notAcceptable(Object body) {
+        return new Response(body, 406);
     }
 
-    public static <R> Response<R> requestTimeout(R responseBody) {
-        return new Response<>(responseBody, 408);
+    public static Response requestTimeout(Object body) {
+        return new Response(body, 408);
     }
 
-    public static <R> Response<R> conflict(R responseBody) {
-        return new Response<>(responseBody, 409);
+    public static Response conflict(Object body) {
+        return new Response(body, 409);
     }
 
-    public static <R> Response<R> gone(R responseBody) {
-        return new Response<>(responseBody, 410);
+    public static Response gone(Object body) {
+        return new Response(body, 410);
     }
 
-    public static <R> Response<R> unsupportedMediaType(R responseBody) {
-        return new Response<>(responseBody, 415);
+    public static Response unsupportedMediaType(Object body) {
+        return new Response(body, 415);
     }
 
-    public static <R> Response<R> tooManyRequests(R responseBody) {
-        return new Response<>(responseBody, 429);
+    public static Response tooManyRequests(Object body) {
+        return new Response(body, 429);
     }
 
-    public static <R> Response<R> internalServerError(R responseBody) {
-        return new Response<>(responseBody, 500);
+    public static Response internalServerError(Object body) {
+        return new Response(body, 500);
     }
 
-    public static <R> Response<R> notImplemented(R responseBody) {
-        return new Response<>(responseBody, 501);
+    public static Response notImplemented(Object body) {
+        return new Response(body, 501);
     }
 
-    public static <R> Response<R> serviceUnavailable(R responseBody) {
-        return new Response<>(responseBody, 503);
+    public static Response serviceUnavailable(Object body) {
+        return new Response(body, 503);
     }
 }

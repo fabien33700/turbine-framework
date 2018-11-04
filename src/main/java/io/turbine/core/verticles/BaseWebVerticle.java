@@ -86,7 +86,7 @@ public abstract class BaseWebVerticle extends BaseHttpVerticle implements WebVer
      */
 
     protected Consumer<RoutingContext>
-    jsonResponse(RxRequestHandler<Object> requestHandler)
+    jsonResponse(RxRequestHandler requestHandler)
     {
         return response(
                 ResponseAdapter.jsonAdapter(),
@@ -97,23 +97,24 @@ public abstract class BaseWebVerticle extends BaseHttpVerticle implements WebVer
 
 
     protected <Rp> Consumer<RoutingContext>
-    response(RxRequestHandler<Object> requestHandler) {
+    response(RxRequestHandler requestHandler) {
         return response(
                 ResponseAdapter.plainTextAdapter(),
                 Object::toString,
                 requestHandler);
     }
 
-    private <Rp> Consumer<RoutingContext>
+    private Consumer<RoutingContext>
     response(ResponseAdapter adapter,
-             ResponsePrinter<Rp> printer,
-             RxRequestHandler<Rp> rxRequestHandler) {
+             ResponsePrinter printer,
+             RxRequestHandler rxRequestHandler) {
         return rc -> {
-            Single<Response<Rp>> response = rxRequestHandler.apply(rc);
+            Single<Response> response = rxRequestHandler.apply(rc);
 
             adapter.accept(rc.response());
-            response.subscribe(rp ->
-                    writeResponse(rc, printer.apply(rp.body()), rp.statusCode()));
+            register(response.subscribe(rp ->
+                    writeResponse(rc, printer.apply(rp.body()), rp.statusCode())
+            ));
         };
     }
 
@@ -126,7 +127,8 @@ public abstract class BaseWebVerticle extends BaseHttpVerticle implements WebVer
     /*
      * Exception Handlers
      */
-    protected Single<Response<Object>> handleException(Throwable t)  {
+
+    protected Single<Response> defaultExceptionHandler(Throwable t)  {
         try {
             try {
                 throw t;
@@ -140,7 +142,7 @@ public abstract class BaseWebVerticle extends BaseHttpVerticle implements WebVer
                 serverErrors.onNext(httpEx);
 
             return just(
-                    new Response<>(httpEx, httpEx.statusCode()));
+                    new Response(httpEx, httpEx.statusCode()));
         }
     }
 }
