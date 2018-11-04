@@ -1,7 +1,7 @@
 package io.turbine.core.verticles.behaviors;
 
 import io.reactivex.Observable;
-import io.turbine.core.model.ws.Message;
+import io.turbine.core.ws.Message;
 
 /**
  * Defines the behavioral specification of a Web Socket Verticle,

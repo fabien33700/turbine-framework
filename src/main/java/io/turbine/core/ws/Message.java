@@ -1,4 +1,4 @@
-package io.turbine.core.model.ws;
+package io.turbine.core.ws;
 
 import java.time.Instant;
 import java.util.Optional;

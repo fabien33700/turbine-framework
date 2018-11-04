@@ -1,4 +1,4 @@
-package io.turbine.core.model.web.router;
+package io.turbine.core.web.router;
 
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpMethod;

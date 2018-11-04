@@ -1,6 +1,6 @@
-package io.turbine.core.model.ws.impl;
+package io.turbine.core.ws.impl;
 
-import io.turbine.core.model.ws.WebSocketConnection;
+import io.turbine.core.ws.WebSocketConnection;
 import io.vertx.reactivex.core.http.ServerWebSocket;
 
 import java.time.Instant;

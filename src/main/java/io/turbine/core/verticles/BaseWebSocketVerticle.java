@@ -4,11 +4,11 @@ import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.reactivex.subjects.BehaviorSubject;
 import io.reactivex.subjects.Subject;
-import io.turbine.core.model.ws.Message;
-import io.turbine.core.model.ws.WebSocketConnection;
-import io.turbine.core.model.ws.impl.MessageImpl;
-import io.turbine.core.model.ws.impl.WebSocketConnectionImpl;
 import io.turbine.core.verticles.behaviors.WebSocketVerticle;
+import io.turbine.core.ws.Message;
+import io.turbine.core.ws.WebSocketConnection;
+import io.turbine.core.ws.impl.MessageImpl;
+import io.turbine.core.ws.impl.WebSocketConnectionImpl;
 import io.vertx.reactivex.core.http.HttpServer;
 import io.vertx.reactivex.core.http.ServerWebSocket;
 

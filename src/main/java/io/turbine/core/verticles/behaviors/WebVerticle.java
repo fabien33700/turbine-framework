@@ -1,6 +1,6 @@
 package io.turbine.core.verticles.behaviors;
 
-import io.turbine.core.model.web.router.ReactiveRouter;
+import io.turbine.core.web.router.ReactiveRouter;
 
 /**
  * Defines the behavioral specification of a Web verticle, which means a verticle

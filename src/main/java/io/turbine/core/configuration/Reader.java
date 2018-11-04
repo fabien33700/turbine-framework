@@ -8,31 +8,31 @@ import java.util.NoSuchElementException;
  * A utility class to read Json configuration with dot-separated access path.
  *
  * Instead of recursively getting nested JsonObject from whole configuration,
- * developer specifies path like "web.router.route" to retrieve 'route' value from
+ * developer specifies path like "web.router.path" to retrieve 'path' value from
  * JsonObject with key 'router' in JsonObject with key 'web', which prevents him
  * to call :
  *
- *  <code>configuration.getJsonObject("web").getJsonObject("router").getValue("route")</code>
+ *  <code>configuration.getJsonObject("web").getJsonObject("router").getValue("path")</code>
  *
  * and especially to deal with <code>null</code> value if the <code>JsonObject</code> hierarchy, like this :
  *
  *  <code>
  *      String defaultRoute = "/customer/xxx";
- *      String route = null;
+ *      String path = null;
  *      JsonObject web = configuration.getJsonObject("web");
  *      if (web != null) {
  *          JsonObject router = web.getJsonObject("router");
  *          if (router != null) {
- *              route = router.getValue("route");
+ *              path = router.getValue("path");
  *          }
  *      }
  *
- *      if (route == null) {
- *          route = defaultRoute;
+ *      if (path == null) {
+ *          path = defaultRoute;
  *      }
  *  </code>
  *
- *  Instead, (s)he will be able to use <code>reader.read("web.router.route", "/customer/xxx");</code>
+ *  Instead, (s)he will be able to use <code>reader.read("web.router.path", "/customer/xxx");</code>
  *
  *  IMPORTANT ! Given that we use dot (.) to separate each node of the path, the reader is NOT compatible
  *  with configuration JsonObject that contains property keys containing themselves the dot character (.)

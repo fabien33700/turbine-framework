@@ -1,4 +1,4 @@
-package io.turbine.core.model.ws;
+package io.turbine.core.ws;
 
 import io.vertx.reactivex.core.http.ServerWebSocket;
 

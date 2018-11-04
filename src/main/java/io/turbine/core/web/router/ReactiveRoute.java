@@ -1,4 +1,4 @@
-package io.turbine.core.model.web.router;
+package io.turbine.core.web.router;
 
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;

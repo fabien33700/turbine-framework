@@ -1,4 +1,4 @@
-package io.turbine.core.model.web.router;
+package io.turbine.core.web.router;
 
 public final class Response<R> {
     private final R responseBody;

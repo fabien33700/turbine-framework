@@ -1,4 +1,4 @@
-package io.turbine.core.model;
+package io.turbine.core.web;
 
 public final class HttpConstants {
 

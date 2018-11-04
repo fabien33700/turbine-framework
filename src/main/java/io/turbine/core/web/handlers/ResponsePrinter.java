@@ -1,4 +1,4 @@
-package io.turbine.core.model.web.handlers;
+package io.turbine.core.web.handlers;
 
 import io.reactivex.functions.Function;
 

@@ -1,6 +1,6 @@
-package io.turbine.core.model.ws.impl;
+package io.turbine.core.ws.impl;
 
-import io.turbine.core.model.ws.Message;
+import io.turbine.core.ws.Message;
 
 import java.time.Instant;
 import java.util.Optional;

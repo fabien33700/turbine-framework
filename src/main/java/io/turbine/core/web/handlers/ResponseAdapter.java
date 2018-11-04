@@ -1,11 +1,11 @@
-package io.turbine.core.model.web.handlers;
+package io.turbine.core.web.handlers;
 
 import io.reactivex.functions.Consumer;
 import io.vertx.reactivex.core.http.HttpServerResponse;
 
-import static io.turbine.core.model.HttpConstants.ContentTypes.APPLICATION_JSON;
-import static io.turbine.core.model.HttpConstants.ContentTypes.TEXT_PLAIN;
-import static io.turbine.core.model.HttpConstants.ResponseHeaders.CONTENT_TYPE;
+import static io.turbine.core.web.HttpConstants.ContentTypes.APPLICATION_JSON;
+import static io.turbine.core.web.HttpConstants.ContentTypes.TEXT_PLAIN;
+import static io.turbine.core.web.HttpConstants.ResponseHeaders.CONTENT_TYPE;
 
 public interface ResponseAdapter extends Consumer<HttpServerResponse> {
 
