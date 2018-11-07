@@ -94,9 +94,24 @@ public abstract class BaseWebVerticle extends BaseHttpVerticle implements WebVer
                 requestHandler);
     }
 
+    protected Consumer<RoutingContext>
+    xmlResponse(RxRequestHandler requestHandler)
+    {
+        throw new UnsupportedOperationException("Not implemented yet!");
+    }
+
+    protected Consumer<RoutingContext>
+    textResponse(RxRequestHandler requestHandler)
+    {
+        return response(
+                ResponseAdapter.plainTextAdapter(),
+                Object::toString,
+                requestHandler);
+    }
 
 
-    protected <Rp> Consumer<RoutingContext>
+
+    protected Consumer<RoutingContext>
     response(RxRequestHandler requestHandler) {
         return response(
                 ResponseAdapter.plainTextAdapter(),
