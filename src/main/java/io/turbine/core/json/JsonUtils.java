@@ -11,10 +11,10 @@ import static java.util.stream.Collector.of;
 
 public class JsonUtils {
 
-    private static Collector<JsonObject, ?, JsonArray> JSON_ARRAY_COLLECTOR = of(
+    private static Collector<Object, ?, JsonArray> JSON_ARRAY_COLLECTOR = of(
             JsonArray::new, JsonArray::add, JsonArray::addAll);
 
-    public static Collector<JsonObject, ?, JsonArray> jsonArrayCollector() {
+    public static Collector<Object, ?, JsonArray> jsonArrayCollector() {
         return JSON_ARRAY_COLLECTOR;
     }
 

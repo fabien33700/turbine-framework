@@ -1,4 +1,4 @@
-package io.turbine.core.jdbc;
+package io.turbine.core.jdbc.transformers;
 
 import io.reactivex.functions.Function;
 import io.vertx.core.json.JsonObject;

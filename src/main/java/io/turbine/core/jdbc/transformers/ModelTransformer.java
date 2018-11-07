@@ -1,7 +1,6 @@
 package io.turbine.core.jdbc.transformers;
 
 
-import io.turbine.core.jdbc.ResultTransformer;
 import io.turbine.core.json.JsonSerializable;
 import io.vertx.core.json.JsonObject;
 

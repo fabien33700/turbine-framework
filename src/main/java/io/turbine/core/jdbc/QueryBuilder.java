@@ -1,26 +1,20 @@
 package io.turbine.core.jdbc;
 
-import io.turbine.core.errors.exceptions.jdbc.NoResultException;
-import io.vertx.core.json.JsonObject;
-import io.vertx.ext.sql.ResultSet;
+import io.turbine.core.jdbc.results.Results;
+import io.vertx.core.json.JsonArray;
 
-import java.util.List;
+import java.util.stream.Stream;
+
+import static io.turbine.core.json.JsonUtils.jsonArrayCollector;
 
 public final class QueryBuilder {
 
-    public final QueryExecutor<JsonObject> single(final String sql) {
-        return connection -> connection
-                .rxQuery(sql)
-                .map(rs -> rs.getRows().stream()
-                        .findFirst()
-                        .orElseThrow(NoResultException::new))
-                .doFinally(connection::close);
-    }
+    public final QueryExecutor<Results> single(final String sql, final Object... params) {
+        JsonArray array = Stream.of(params).collect(jsonArrayCollector());
 
-    public final QueryExecutor<List<JsonObject>> list(final String sql) {
         return connection -> connection
-                    .rxQuery(sql)
-                    .map(ResultSet::getRows)
+                .rxQueryWithParams(sql, array)
+                .map(Results::from)
                 .doFinally(connection::close);
     }
 }

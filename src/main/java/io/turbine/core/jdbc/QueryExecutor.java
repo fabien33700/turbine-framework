@@ -2,6 +2,7 @@ package io.turbine.core.jdbc;
 
 import io.reactivex.SingleSource;
 import io.reactivex.functions.Function;
+import io.turbine.core.jdbc.results.Results;
 import io.vertx.reactivex.ext.sql.SQLConnection;
 
 /**
@@ -21,4 +22,4 @@ import io.vertx.reactivex.ext.sql.SQLConnection;
  * @param <R> The type of the query result
  * @author Fabien <fabien DOT lehouedec AT gmail DOT com>
  */
-public interface QueryExecutor<R> extends Function<SQLConnection, SingleSource<R>> {}
+public interface QueryExecutor<R> extends Function<SQLConnection, SingleSource<Results>> {}
