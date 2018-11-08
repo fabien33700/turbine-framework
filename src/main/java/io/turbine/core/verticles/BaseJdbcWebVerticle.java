@@ -5,7 +5,6 @@ import io.reactivex.CompletableObserver;
 import io.reactivex.Single;
 import io.turbine.core.jdbc.QueryBuilder;
 import io.turbine.core.verticles.behaviors.JdbcVerticle;
-import io.turbine.core.verticles.lifecycle.InitializationChain;
 import io.vertx.ext.sql.SQLOptions;
 import io.vertx.reactivex.ext.jdbc.JDBCClient;
 import io.vertx.reactivex.ext.sql.SQLConnection;
@@ -23,12 +22,12 @@ public abstract class BaseJdbcWebVerticle extends BaseWebVerticle implements Jdb
     }
 
     @Override
-    protected InitializationChain initialize() {
-        return super.initialize().append(new Completable() {
+    protected void initialize() {
+        doOnInitialize(new Completable() {
              @Override
              protected void subscribeActual(CompletableObserver s) {
                  try {
-                     BaseJdbcWebVerticle.this.jdbc = createShared(vertx, jdbcConfiguration());
+                     jdbc = createShared(vertx, jdbcConfiguration());
                      connect()
                          .doOnSuccess(connection -> {
                              connection.close();
