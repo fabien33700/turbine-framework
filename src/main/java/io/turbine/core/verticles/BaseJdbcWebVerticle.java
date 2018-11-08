@@ -1,5 +1,7 @@
 package io.turbine.core.verticles;
 
+import io.reactivex.Completable;
+import io.reactivex.CompletableObserver;
 import io.reactivex.Single;
 import io.turbine.core.jdbc.QueryBuilder;
 import io.turbine.core.verticles.behaviors.JdbcVerticle;
@@ -20,12 +22,24 @@ public abstract class BaseJdbcWebVerticle extends BaseWebVerticle implements Jdb
     }
 
     @Override
-    protected void init() {
-        jdbc = createShared(vertx, jdbcConfiguration());
-        connect().subscribe(c -> {
-            c.close();
-            logger.info("Asynchronous JDBC client ready, connection to the DBMS tested OK");
-        });
+    protected void initialize() {
+        doOnInitialize(new Completable() {
+             @Override
+             protected void subscribeActual(CompletableObserver s) {
+                 try {
+                     jdbc = createShared(vertx, jdbcConfiguration());
+                     connect()
+                         .doOnSuccess(connection -> {
+                             connection.close();
+                             logger.info("Asynchronous JDBC client ready, connection to the DBMS tested OK");
+                             s.onComplete();
+                         })
+                         .subscribe();
+                 } catch (Throwable t) {
+                     s.onError(t);
+                 }
+             }
+         });
     }
 
     @Override

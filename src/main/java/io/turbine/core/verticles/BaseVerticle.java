@@ -1,6 +1,7 @@
 package io.turbine.core.verticles;
 
 import io.reactivex.BackpressureStrategy;
+import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.subjects.BehaviorSubject;
@@ -17,8 +18,11 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.reactivex.core.AbstractVerticle;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.NoSuchElementException;
+
+import static java.util.Objects.requireNonNull;
 
 /**
  * Defines a base implementation for all the verticles in the application.
@@ -51,6 +55,11 @@ public abstract class BaseVerticle extends AbstractVerticle {
     private Reader reader;
 
     /**
+     * A chain of completable for initializing the verticles inheritance hierarchy
+     */
+    private List<Completable> initChain;
+
+    /**
      * Initialize the Verticle, called by Vert.x
      * @param vertx  the deploying Vert.x instance
      * @param context  the context of the verticle
@@ -59,12 +68,19 @@ public abstract class BaseVerticle extends AbstractVerticle {
     public void init(Vertx vertx, Context context) {
         super.init(vertx, context);
         reader = new Reader(config());
-        try {
-            init();
-        } catch (Exception ex) {
-            // Catching exceptions that occured during initialization
-            throw new InitializationException(ex, this);
-        }
+        initChain = new LinkedList<>();
+        initialize();
+        processInitializationChain();
+    }
+
+    private void processInitializationChain() throws InitializationException {
+        initChain.stream()
+                .reduce(Completable::andThen)
+                .orElseThrow(() -> new InitializationException(
+                        new IllegalStateException("Could not aggregate verticle hierarchy initialization completables"),
+                        this
+                ))
+                .subscribe(() -> logger.info("Verticle {} is READY !", getClass().getSimpleName()));
     }
 
     @Override
@@ -117,9 +133,14 @@ public abstract class BaseVerticle extends AbstractVerticle {
     }
 
     /**
-     * A method that will be executed before the deployment of the verticle.
+     * Allows to define a Completable task that will be execute for Verticle initialization.
      */
-    protected void init() throws Exception {}
+    protected final void doOnInitialize(Completable completable) {
+        requireNonNull(completable, "completable");
+        initChain.add(completable);
+    }
+
+    protected void initialize() {}
 
     public Flowable<Throwable> serverErrors() {
         return serverErrors.toFlowable(BackpressureStrategy.DROP);
