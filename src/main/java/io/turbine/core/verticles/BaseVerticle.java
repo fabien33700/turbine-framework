@@ -7,9 +7,9 @@ import io.reactivex.subjects.BehaviorSubject;
 import io.reactivex.subjects.Subject;
 import io.turbine.core.configuration.Dispatcher;
 import io.turbine.core.configuration.Reader;
-import io.turbine.core.errors.exceptions.verticles.InitializationException;
 import io.turbine.core.logging.Logger;
 import io.turbine.core.logging.LoggerFactory;
+import io.turbine.core.verticles.lifecycle.InitializationChain;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
@@ -50,6 +50,8 @@ public abstract class BaseVerticle extends AbstractVerticle {
      */
     private Reader reader;
 
+    private InitializationChain initChain;
+
     /**
      * Initialize the Verticle, called by Vert.x
      * @param vertx  the deploying Vert.x instance
@@ -59,12 +61,7 @@ public abstract class BaseVerticle extends AbstractVerticle {
     public void init(Vertx vertx, Context context) {
         super.init(vertx, context);
         reader = new Reader(config());
-        try {
-            init();
-        } catch (Exception ex) {
-            // Catching exceptions that occured during initialization
-            throw new InitializationException(ex, this);
-        }
+        initialize().toCompletable().subscribe();
     }
 
     @Override
@@ -119,7 +116,9 @@ public abstract class BaseVerticle extends AbstractVerticle {
     /**
      * A method that will be executed before the deployment of the verticle.
      */
-    protected void init() throws Exception {}
+    protected InitializationChain initialize() {
+        return new InitializationChain(this);
+    }
 
     public Flowable<Throwable> serverErrors() {
         return serverErrors.toFlowable(BackpressureStrategy.DROP);
