@@ -1,9 +1,8 @@
 package io.turbine.core.verticles;
 
-import io.reactivex.BackpressureStrategy;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
+import io.reactivex.*;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.functions.Action;
 import io.reactivex.subjects.BehaviorSubject;
 import io.reactivex.subjects.Subject;
 import io.turbine.core.configuration.Dispatcher;
@@ -16,12 +15,15 @@ import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.reactivex.core.AbstractVerticle;
+import org.reactivestreams.Publisher;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.concurrent.Callable;
 
+import static io.reactivex.Completable.*;
 import static java.util.Objects.requireNonNull;
 
 /**
@@ -36,6 +38,61 @@ import static java.util.Objects.requireNonNull;
  * @author Fabien <fabien DOT lehouedec AT gmail DOT com>
  */
 public abstract class BaseVerticle extends AbstractVerticle {
+
+    /**
+     * A chain of completable for initializing the verticles inheritance hierarchy
+     */
+    public class CompletableChain {
+        private List<Completable> chain = new LinkedList<>();
+
+        public CompletableChain append(Completable completable) {
+            requireNonNull(completable, "completable");
+            chain.add(completable);
+
+            return this;
+        }
+
+        public CompletableChain append(Action action) {
+            requireNonNull(action, "action");
+            return append(fromAction(action));
+        }
+
+        public CompletableChain append(SingleSource<?> single) {
+            requireNonNull(single, "single");
+            return append(fromSingle(single));
+        }
+
+        public CompletableChain append(Callable<?> callable) {
+            requireNonNull(callable, "callable");
+            return append(fromCallable(callable));
+        }
+
+        public CompletableChain append(java.util.concurrent.Future<?> future) {
+            requireNonNull(future, "future");
+            return append(fromFuture(future));
+        }
+
+        public CompletableChain append(Observable<?> single) {
+            requireNonNull(single, "single");
+            return append(fromObservable(single));
+        }
+
+        public CompletableChain append(Publisher<?> publisher) {
+            requireNonNull(publisher, "publisher");
+            return append(fromPublisher(publisher));
+        }
+
+        public CompletableChain append(Runnable runnable) {
+            requireNonNull(runnable, "runnable");
+            return append(fromRunnable(runnable));
+        }
+
+        public Completable reduce() {
+            return chain.stream()
+                .reduce(Completable::andThen)
+                .orElseGet(Completable::complete);
+        }
+    }
 
     protected Subject<Throwable> serverErrors = BehaviorSubject.create();
 
@@ -55,32 +112,14 @@ public abstract class BaseVerticle extends AbstractVerticle {
     private Reader reader;
 
     /**
-     * A chain of completable for initializing the verticles inheritance hierarchy
-     */
-    private List<Completable> initChain;
-
-    /**
      * Initialize the Verticle, called by Vert.x
      * @param vertx  the deploying Vert.x instance
      * @param context  the context of the verticle
      */
     @Override
-    public void init(Vertx vertx, Context context) {
+    public void init(Vertx vertx, Context context) throws InitializationException {
         super.init(vertx, context);
         reader = new Reader(config());
-        initChain = new LinkedList<>();
-        initialize();
-        processInitializationChain();
-    }
-
-    private void processInitializationChain() throws InitializationException {
-        initChain.stream()
-                .reduce(Completable::andThen)
-                .orElseThrow(() -> new InitializationException(
-                        new IllegalStateException("Could not aggregate verticle hierarchy initialization completables"),
-                        this
-                ))
-                .subscribe(() -> logger.info("Verticle {} is READY !", getClass().getSimpleName()));
     }
 
     @Override
@@ -121,6 +160,14 @@ public abstract class BaseVerticle extends AbstractVerticle {
         return reader.read(path);
     }
 
+    @Override
+    public void start(Future<Void> startFuture) {
+        initialize().reduce()
+            .doOnComplete(() -> logger.info("Verticle {} is READY !", getClass().getSimpleName()))
+            .doOnError(Throwable::printStackTrace)
+            .subscribe();
+    }
+
     /**
      * Stop the verticle.
      * @param stopFuture The future for stop operation
@@ -135,12 +182,9 @@ public abstract class BaseVerticle extends AbstractVerticle {
     /**
      * Allows to define a Completable task that will be execute for Verticle initialization.
      */
-    protected final void doOnInitialize(Completable completable) {
-        requireNonNull(completable, "completable");
-        initChain.add(completable);
+    protected CompletableChain initialize() {
+        return new CompletableChain();
     }
-
-    protected void initialize() {}
 
     public Flowable<Throwable> serverErrors() {
         return serverErrors.toFlowable(BackpressureStrategy.DROP);

@@ -22,8 +22,9 @@ public abstract class BaseJdbcWebVerticle extends BaseWebVerticle implements Jdb
     }
 
     @Override
-    protected void initialize() {
-        doOnInitialize(new Completable() {
+    protected CompletableChain initialize() {
+        // TODO Refactor with a method (avoid invoking anonymous new(), replace by lambda)
+        return super.initialize().append(new Completable() {
              @Override
              protected void subscribeActual(CompletableObserver s) {
                  try {

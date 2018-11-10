@@ -15,10 +15,10 @@ public final class ReactiveRoute {
     private Handler<RoutingContext> delegateHandler = null;
 
     ReactiveRoute(Route delegate) {
-        delegate.handler(ctx -> {
-            subject.onNext(ctx);
+        delegate.handler(rc -> {
+            subject.onNext(rc);
             if (delegateHandler != null)
-                delegateHandler.handle(ctx);
+                delegateHandler.handle(rc);
         });
     }
 

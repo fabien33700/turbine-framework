@@ -13,7 +13,7 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-import static io.turbine.core.json.JsonUtils.jsonArrayCollector;
+import static io.turbine.core.json.JsonFormat.jsonArrayCollector;
 
 public class ManyResults implements Results {
 
