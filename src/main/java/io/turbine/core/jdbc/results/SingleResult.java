@@ -7,8 +7,14 @@ import io.turbine.core.jdbc.transformers.ResultTransformer;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.sql.ResultSet;
 
+/**
+ * A Results implementation for gathering only one single result.
+ * It is a particular case of ManyResults implementation.
+ *
+ * @author Fabien <fabien DOT lehouedec AT gmail DOT com>
+ */
 public class SingleResult extends ManyResults {
-    SingleResult(ResultSet rs) {
+    public SingleResult(ResultSet rs) {
         super(rs);
     }
 

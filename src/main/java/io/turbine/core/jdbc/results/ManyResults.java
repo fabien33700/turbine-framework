@@ -15,11 +15,16 @@ import java.util.List;
 
 import static io.turbine.core.json.JsonFormat.jsonArrayCollector;
 
+/**
+ * A Results implementation for gathering many results.
+ *
+ * @author Fabien <fabien DOT lehouedec AT gmail DOT com>
+ */
 public class ManyResults implements Results {
 
     protected final List<JsonObject> rows;
 
-    ManyResults(ResultSet rs) {
+    public ManyResults(ResultSet rs) {
         rows = new LinkedList<>(rs.getRows());
     }
 
@@ -46,6 +51,11 @@ public class ManyResults implements Results {
         return rows.stream().collect(jsonArrayCollector());
     }
 
+
+    /*
+     * ManyResults is not supposed to have only one single result,
+     * it will throw appropriate exception if getSingle() or getTypedSingle() are called.
+     */
     @Override
     public JsonObject getSingle() throws JdbcException {
         throw new NotSingleResultException();
@@ -63,7 +73,7 @@ public class ManyResults implements Results {
 
     @Override
     public final boolean isSingle() {
-        return count() == 1;
+        return count() <= 1;
     }
 
     @Override

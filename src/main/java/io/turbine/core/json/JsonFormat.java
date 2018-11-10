@@ -9,9 +9,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collector;
+import java.util.stream.Stream;
 
 import static io.turbine.core.utils.Dates.formatDateIso3601;
 import static io.turbine.core.utils.GeneralUtils.isPrimitiveOrWrapper;
+import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collector.of;
 
 public final class JsonFormat {
@@ -67,6 +69,11 @@ public final class JsonFormat {
         } else {
             return parseJsonObject(response).encodePrettily();
         }
+    }
+
+    public static JsonArray createJsonArray(Object... objects) {
+        requireNonNull(objects, "objects");
+        return Stream.of(objects).collect(JSON_ARRAY_COLLECTOR);
     }
 
 }

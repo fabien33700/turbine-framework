@@ -5,8 +5,21 @@ import java.util.UUID;
 import static io.turbine.core.utils.Strings.getStackTraceAsString;
 import static java.util.UUID.randomUUID;
 
+/**
+ * This exception represents 500 - 'Internal Server Error' HTTP Error.
+ * In order to hide the source exception detail to the user, the class wraps
+ * it and serialize a generic HTTP error that will be sended back to the client.
+ *
+ * The class has a unique identifier that will be logged with the source exception,
+ * so administrator can find its stacktrace with the uuid given to the client.
+ *
+ * @author Fabien <fabien DOT lehouedec AT gmail DOT com>
+ */
 public class ServerErrorException extends HttpException {
 
+    /**
+     * The exception unique identifier
+     */
     private final UUID uuid;
 
     public ServerErrorException(Throwable cause) {
@@ -17,7 +30,7 @@ public class ServerErrorException extends HttpException {
     @Override
     protected String defaultMessage() {
         return "An internal server error has occurred. " +
-                "Please contact your administrator and supply him the error unique identifier";
+                "Please contact your administrator and supply him the error unique identifier.";
     }
 
     @Override
@@ -25,6 +38,10 @@ public class ServerErrorException extends HttpException {
         return 500;
     }
 
+    /**
+     * Gets the exception unique identifier.
+     * @return The exception uuid
+     */
     public String getUuid() {
         return uuid.toString();
     }
