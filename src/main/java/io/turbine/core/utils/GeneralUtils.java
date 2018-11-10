@@ -7,9 +7,21 @@ import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 
 public class GeneralUtils {
+
+    private static final Class<?>[] PRIMITIVES_WRAPPER_AND_TYPES = new Class<?>[] {
+        Boolean.class, Boolean.TYPE,
+        Byte.class, Byte.TYPE,
+        Character.class, Character.TYPE,
+        Double.class, Double.TYPE,
+        Float.class, Float.TYPE,
+        Integer.class, Integer.TYPE,
+        Long.class, Long.TYPE,
+        Short.class, Short.TYPE
+    };
 
     @SuppressWarnings("unchecked")
     public static Map<String,Object> extractQuery(String query) {
@@ -57,8 +69,6 @@ public class GeneralUtils {
         return hierarchy;
     }
 
-
-
     public static <E, C extends Collection<E>> C fromIterable(Iterable<E> items, Supplier<C> factory) {
         C collection = factory.get();
         items.forEach(collection::add);
@@ -69,4 +79,12 @@ public class GeneralUtils {
     public static <E> List<E> fromIterable(Iterable<E> items) {
         return fromIterable(items, ArrayList::new);
     }
+
+    public static boolean isPrimitiveOrWrapper(Object response) {
+        final Class<?> clazz = response.getClass();
+        return clazz.isPrimitive() ||
+                asList(PRIMITIVES_WRAPPER_AND_TYPES).contains(clazz);
+    }
+
+
 }

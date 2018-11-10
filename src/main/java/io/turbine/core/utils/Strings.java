@@ -6,7 +6,7 @@ import java.util.Iterator;
 
 import static java.util.Arrays.asList;
 
-public final class StringUtils extends org.apache.commons.lang3.StringUtils {
+public final class Strings extends org.apache.commons.lang3.StringUtils {
 
     public static String getStackTraceAsString(Throwable t) {
         StringWriter sw = new StringWriter();

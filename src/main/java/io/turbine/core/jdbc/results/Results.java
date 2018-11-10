@@ -30,4 +30,8 @@ public interface Results {
         int size = rs.getRows().size();
         return (size <= 1) ? new SingleResult(rs) : new ManyResults(rs);
     }
+
+    static Results manyFrom(ResultSet rs) {
+        return new ManyResults(rs);
+    }
 }

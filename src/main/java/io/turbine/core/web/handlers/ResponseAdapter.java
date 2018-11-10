@@ -3,11 +3,12 @@ package io.turbine.core.web.handlers;
 import io.reactivex.functions.Consumer;
 import io.vertx.reactivex.core.http.HttpServerResponse;
 
-import static io.turbine.core.web.HttpConstants.ContentTypes.APPLICATION_JSON;
-import static io.turbine.core.web.HttpConstants.ContentTypes.TEXT_PLAIN;
+import static io.turbine.core.web.HttpConstants.ContentTypes.*;
 import static io.turbine.core.web.HttpConstants.ResponseHeaders.CONTENT_TYPE;
 
 public interface ResponseAdapter extends Consumer<HttpServerResponse> {
+
+    String DEFAULT_ENCODING = "utf-8";
 
     static ResponseAdapter create(String contentType) {
         return resp -> resp.putHeader(CONTENT_TYPE, contentType);
@@ -18,10 +19,27 @@ public interface ResponseAdapter extends Consumer<HttpServerResponse> {
     }
 
     static ResponseAdapter jsonAdapter() {
-        return create(APPLICATION_JSON, "utf-8");
+        return jsonAdapter(DEFAULT_ENCODING);
+    }
+
+
+    static ResponseAdapter jsonAdapter(String charset) {
+        return create(APPLICATION_JSON, charset);
     }
 
     static ResponseAdapter plainTextAdapter() {
-        return create(TEXT_PLAIN, "utf-8");
+        return plainTextAdapter(DEFAULT_ENCODING);
+    }
+
+    static ResponseAdapter plainTextAdapter(String charset) {
+        return create(TEXT_PLAIN, charset);
+    }
+
+    static ResponseAdapter xmlAdapter() {
+        return xmlAdapter(DEFAULT_ENCODING);
+    }
+
+    static ResponseAdapter xmlAdapter(String charset) {
+        return create(APPLICATION_XML, charset);
     }
 }

@@ -2,11 +2,11 @@ package io.turbine.core.utils;
 
 import org.junit.jupiter.api.Test;
 
-import static io.turbine.core.utils.StringUtils.format;
+import static io.turbine.core.utils.Strings.format;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
-class StringUtilsTest {
+class StringsTest {
 
     @Test
     void testFormat() {
