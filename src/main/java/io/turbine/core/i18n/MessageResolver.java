@@ -1,101 +1,44 @@
 package io.turbine.core.i18n;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.HashMap;
 import java.util.Locale;
-import java.util.Map;
-import java.util.Properties;
+import java.util.Set;
 
-import static io.turbine.core.utils.Strings.format;
-import static java.util.Objects.requireNonNull;
+/**
+ * Describes the behavior for a service that can dispatch translated
+ * messages from properties file with a key and the current or a specified Locale.
+ *
+ * @author Fabien <fabien DOT lehouedec AT gmail DOT com>
+ */
+public interface MessageResolver {
+    /**
+     * Resolve the message for the given key, replacing all placeholders
+     * with given arguments.
+     * @param key The key of the message
+     * @param args The arguments to include in the message
+     * @return The resolved message
+     */
+    String getMessage(String key, Object... args);
 
-public class MessageResolver {
+    /**
+     * Resolve the message for the given key, in the specified locale
+     * replacing all placeholder with given arguments.
+     * @param locale The locale in which resolve the message
+     * @param key The key of the message
+     * @param args The arguments to include in the message
+     * @return The resolved message
+     */
+    String getMessage(Locale locale, String key, Object... args);
 
-    private static final boolean RAISE_NOT_EXISTING_KEY = false;
-    private static final Logger logger = LoggerFactory.getLogger(MessageResolver.class);
-    private static final String MESSAGES_PATH = "";
-    private static MessageResolver instance = null;
+    /**
+     * Returns all locales successfully load by the MessageResolver.
+     * @return A set of Locale
+     */
+    Set<Locale> getSupportedLocales();
 
-    public static MessageResolver getInstance() {
-        if (instance == null) {
-            instance = new MessageResolver();
-        }
-        return instance;
-    }
-
-    private Map<Locale, Properties> localizedMessages = new HashMap<>();
-
-    private MessageResolver() {
-        try {
-            getLocalizedMessages(Locale.getDefault());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    private Properties getLocalizedMessages(Locale locale) {
-        try {
-            return unsafeGetLocalizedMessages(locale);
-        } catch (Exception e) {
-            logger.error("{}", e);
-            return new Properties();
-        }
-    }
-
-    private Properties unsafeGetLocalizedMessages(Locale locale) throws Exception {
-        requireNonNull(locale);
-
-        if (!localizedMessages.containsKey(locale)) {
-            Properties messages = new Properties();
-            String filename = getMessagesFilename(locale);
-            try {
-                messages.load(getClass().getClassLoader().getResourceAsStream(filename));
-            } catch (Exception ex) {
-                if (locale.equals(Locale.getDefault())) {
-                    messages = unsafeGetLocalizedMessages(Locale.ENGLISH);
-                    logger.warn("No messages file " + filename + " found. Using messages.properties as fallback.");
-                } else if (locale.equals(Locale.ENGLISH)) {
-                    throw new Exception("You must provide at least a default messages.properties file for " +
-                        "application messages internationalization.");
-                } else {
-                    return localizedMessages.get(Locale.getDefault());
-                }
-            }
-            localizedMessages.put(locale, messages);
-            return messages;
-        } else {
-            return localizedMessages.get(locale);
-        }
-    }
-
-    private String getMessagesFilename(final Locale locale) {
-        if ("en".equals(locale.getLanguage())) {
-            return MESSAGES_PATH + "messages.properties";
-        } else {
-            return MESSAGES_PATH + "messages." + locale.getLanguage() + ".properties";
-        }
-    }
-
-    public String getMessage(final String key, final Object... args) {
-        return getMessage(Locale.getDefault(), key, args);
-    }
-
-    public String getMessage(final Locale locale, final String key, final Object... args) {
-        requireNonNull(locale);
-        if (key == null)
-            return null;
-
-        Properties messages = getLocalizedMessages(locale);
-        if (!messages.containsKey(key)) {
-            if (RAISE_NOT_EXISTING_KEY) {
-                throw new IllegalArgumentException("No message found with key '" + key + "' for locale " + locale.getLanguage());
-            } else {
-                return format(key, args);
-            }
-        }
-
-        return format(messages.getProperty(key), args);
-    }
+    /**
+     * Defines the locale selected as a fallback if getMessage() is called
+     * wwith an unsupported locale or if the associated MessageProvider failed.
+     * @return A Locale instance
+     */
+    Locale defaultLocale();
 }

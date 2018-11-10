@@ -1,15 +1,15 @@
 package io.turbine.core.logging;
 
-import io.turbine.core.i18n.MessageResolver;
+import io.turbine.core.i18n.MessageResolverImpl;
 import org.slf4j.Marker;
 
 public final class Logger implements org.slf4j.Logger {
 
-    private final MessageResolver resolver;
+    private final MessageResolverImpl resolver;
 
     private final org.slf4j.Logger delegate;
 
-    public Logger(org.slf4j.Logger delegate, MessageResolver resolver) {
+    public Logger(org.slf4j.Logger delegate, MessageResolverImpl resolver) {
         this.delegate = delegate;
         this.resolver = resolver;
     }
