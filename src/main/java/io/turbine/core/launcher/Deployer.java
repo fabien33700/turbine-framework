@@ -1,35 +1,34 @@
 package io.turbine.core.launcher;
 
-import io.turbine.core.logging.Logger;
-import io.turbine.core.logging.LoggerFactory;
+import io.turbine.core.errors.exceptions.verticles.ConfigurationException;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.json.JsonObject;
 import io.vertx.reactivex.core.AbstractVerticle;
 import org.apache.commons.cli.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.nio.file.Paths;
-import java.util.Collection;
+import java.util.stream.Stream;
 
-import static io.turbine.core.utils.GeneralUtils.fromInputStream;
+import static io.turbine.core.utils.Utils.fromInputStream;
 import static io.vertx.reactivex.core.Vertx.vertx;
 
-public abstract class VerticleLauncher implements Runnable {
+public final class Deployer implements Runnable {
 
-    private static final String DEFAULT_CONFIG_PATH = "default.configuration.json";
+    private static final String DEFAULT_CONFIG_PATH = "configuration.json";
 
     protected final Logger logger = LoggerFactory.getLogger(getClass());
 
-    private static JsonObject config = null;
-
     private final String[] args;
+    private final Class<?>[] classes;
 
-    protected VerticleLauncher(String[] args) {
+    protected Deployer(String[] args, Class<?>... classes) {
         this.args = args;
-        if (config == null)
-            config = readConfiguration();
+        this.classes = classes;
     }
 
     public void run() {
@@ -37,7 +36,7 @@ public abstract class VerticleLauncher implements Runnable {
     }
 
     private void deployVerticles() {
-        deploy().stream()
+        Stream.of(classes)
             .filter(this::checkVerticle)
             .forEach(this::deployVerticle);
     }
@@ -46,7 +45,12 @@ public abstract class VerticleLauncher implements Runnable {
         logger.info("Deploying verticle " + clazz.getName());
 
         DeploymentOptions options = new DeploymentOptions();
-        options.setConfig(config);
+        try {
+            options.setConfig(readConfiguration());
+        } catch (ConfigurationException ex) {
+            options.setConfig(new JsonObject());
+            logger.warn("Error reading configuration", ex);
+        }
         vertx().deployVerticle(clazz.getName(), options);
     }
 
@@ -54,32 +58,18 @@ public abstract class VerticleLauncher implements Runnable {
         return AbstractVerticle.class.isAssignableFrom(verticleClass);
     }
 
-    protected abstract Collection<Class> deploy();
-
-    private JsonObject readConfiguration() {
+    private JsonObject readConfiguration() throws ConfigurationException {
         String configPath = getConfigurationPath();
+
         if (configPath != null) {
             try {
                 final InputStream is = new FileInputStream(Paths.get(configPath).toFile());
                 return new JsonObject(fromInputStream(is));
             } catch (FileNotFoundException e) {
-                logger.warn("The specified configuration file {} was not found. " +
-                    "Using default configuration instead.", configPath);
+                throw new ConfigurationException(e);
             }
         } else {
-            logger.warn("No specified configuration file. " +
-                "Using default configuration instead.");
-        }
-        return readDefaultConfiguration();
-    }
-
-    private JsonObject readDefaultConfiguration() {
-        try {
-            InputStream is = getClass().getClassLoader().getResourceAsStream(DEFAULT_CONFIG_PATH);
-            return new JsonObject(fromInputStream(is));
-        } catch (Exception ex) {
-            logger.error("Fatal ! Unable to read default configuration in {}", DEFAULT_CONFIG_PATH, ex);
-            return new JsonObject();
+            throw new ConfigurationException("No specified configuration file.");
         }
     }
 
@@ -96,7 +86,7 @@ public abstract class VerticleLauncher implements Runnable {
         } catch (ParseException ex) {
             logger.error("Could not launch the application.", ex);
         }
-        return null;
+        return DEFAULT_CONFIG_PATH;
     }
 
 }
