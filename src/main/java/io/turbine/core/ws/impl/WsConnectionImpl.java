@@ -1,19 +1,19 @@
 package io.turbine.core.ws.impl;
 
-import io.turbine.core.ws.WebSocketConnection;
+import io.turbine.core.ws.WsConnection;
 import io.vertx.reactivex.core.http.ServerWebSocket;
 
 import java.time.Instant;
 import java.util.Objects;
 
-public final class WebSocketConnectionImpl<S> implements WebSocketConnection<S> {
+public final class WsConnectionImpl<S> implements WsConnection<S> {
 
     private final S sender;
     private final ServerWebSocket webSocket;
     private final Instant openingTime;
     private Instant lastActivityTime;
 
-    public WebSocketConnectionImpl(S sender, ServerWebSocket webSocket) {
+    public WsConnectionImpl(S sender, ServerWebSocket webSocket) {
         this.sender = sender;
         this.webSocket = webSocket;
         this.openingTime = Instant.now();
@@ -52,7 +52,7 @@ public final class WebSocketConnectionImpl<S> implements WebSocketConnection<S> 
 
     @Override
     public boolean equals(Object obj) {
-        return obj instanceof WebSocketConnection &&
-            ((WebSocketConnection) obj).webSocket().equals(webSocket());
+        return obj instanceof WsConnection &&
+            ((WsConnection) obj).webSocket().equals(webSocket());
     }
 }

@@ -12,7 +12,7 @@ import java.time.Instant;
  * the instant of connection opening and of last activity.
  * @param <S> The type for representing the message sender
  */
-public interface WebSocketConnection<S> {
+public interface WsConnection<S> {
 
     S sender();
     ServerWebSocket webSocket();

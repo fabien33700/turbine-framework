@@ -6,5 +6,7 @@ import java.util.Optional;
 public interface Message<S, B> {
     Instant sentAt();
     B body();
-    Optional<S> sender();
+    S sender();
+
+    void respond(B responseBody);
 }
