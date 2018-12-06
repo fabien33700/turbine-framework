@@ -11,8 +11,8 @@ import java.util.Map;
 import java.util.stream.Collector;
 import java.util.stream.Stream;
 
-import static io.turbine.core.utils.Dates.formatDateIso3601;
-import static io.turbine.core.utils.GeneralUtils.isPrimitiveOrWrapper;
+import static io.turbine.core.utils.Utils.Dates.formatDateIso3601;
+import static io.turbine.core.utils.Utils.isPrimitiveOrWrapper;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collector.of;
 

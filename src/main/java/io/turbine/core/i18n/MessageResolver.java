@@ -8,7 +8,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 
-import static io.turbine.core.utils.Strings.format;
+import static io.turbine.core.utils.Utils.fromInputStream;
+import static io.turbine.core.utils.Utils.Strings.format;
 import static java.util.Objects.requireNonNull;
 
 public class MessageResolver {

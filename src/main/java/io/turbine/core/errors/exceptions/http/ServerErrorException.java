@@ -2,7 +2,7 @@ package io.turbine.core.errors.exceptions.http;
 
 import java.util.UUID;
 
-import static io.turbine.core.utils.Strings.getStackTraceAsString;
+import static io.turbine.core.utils.Utils.Strings.getStackTraceAsString;
 import static java.util.UUID.randomUUID;
 
 /**

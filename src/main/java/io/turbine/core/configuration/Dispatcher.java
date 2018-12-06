@@ -4,7 +4,7 @@ import io.vertx.core.json.JsonObject;
 
 import java.util.Set;
 
-import static io.turbine.core.utils.GeneralUtils.getClassHierarchy;
+import static io.turbine.core.utils.Utils.getClassHierarchy;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toSet;
 

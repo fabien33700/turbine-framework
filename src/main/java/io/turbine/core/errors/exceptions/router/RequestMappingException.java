@@ -1,4 +1,4 @@
-package io.turbine.core.errors.exceptions.verticles;
+package io.turbine.core.errors.exceptions.router;
 
 import io.turbine.core.web.mapping.RequestHandling;
 
