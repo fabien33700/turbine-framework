@@ -1,12 +1,16 @@
 package io.turbine.core.i18n;
 
+import io.turbine.core.configuration.Reader;
+import io.vertx.core.json.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Properties;
 
 import static io.turbine.core.utils.Utils.fromInputStream;
 import static io.turbine.core.utils.Utils.Strings.format;
@@ -18,6 +22,7 @@ public class MessageResolver {
     private static final Logger logger = LoggerFactory.getLogger(MessageResolver.class);
     private static final String MESSAGES_PATH = "";
     private static MessageResolver instance = null;
+    private final Reader reader;
 
     public static MessageResolver getInstance() {
         if (instance == null) {
@@ -26,33 +31,37 @@ public class MessageResolver {
         return instance;
     }
 
-    private Map<Locale, Properties> localizedMessages = new HashMap<>();
+    private Map<Locale, JsonObject> localizedMessages = new HashMap<>();
 
     private MessageResolver() {
+        JsonObject messages = new JsonObject();
         try {
-            getLocalizedMessages(Locale.getDefault());
+            messages = getLocalizedMessages(Locale.getDefault());
+
         } catch (Exception e) {
             e.printStackTrace();
         }
+        reader = new Reader(messages);
     }
 
-    private Properties getLocalizedMessages(Locale locale) {
+    private JsonObject getLocalizedMessages(Locale locale) {
         try {
             return unsafeGetLocalizedMessages(locale);
         } catch (Exception e) {
             logger.error("{}", e);
-            return new Properties();
+            return new JsonObject();
         }
     }
 
-    private Properties unsafeGetLocalizedMessages(Locale locale) throws Exception {
+    private JsonObject unsafeGetLocalizedMessages(Locale locale) throws Exception {
         requireNonNull(locale);
 
         if (!localizedMessages.containsKey(locale)) {
-            Properties messages = new Properties();
+            JsonObject messages;
             String filename = getMessagesFilename(locale);
             try {
-                messages.load(getClass().getClassLoader().getResourceAsStream(filename));
+                final InputStream is = new FileInputStream(Paths.get(filename).toFile());
+                messages = new JsonObject(fromInputStream(is));
             } catch (Exception ex) {
                 if (locale.equals(Locale.getDefault())) {
                     messages = unsafeGetLocalizedMessages(Locale.ENGLISH);
@@ -88,7 +97,7 @@ public class MessageResolver {
         if (key == null)
             return null;
 
-        Properties messages = getLocalizedMessages(locale);
+        JsonObject messages = getLocalizedMessages(locale);
         if (!messages.containsKey(key)) {
             if (RAISE_NOT_EXISTING_KEY) {
                 throw new IllegalArgumentException("No message found with key '" + key + "' for locale " + locale.getLanguage());
@@ -97,6 +106,6 @@ public class MessageResolver {
             }
         }
 
-        return format(messages.getProperty(key), args);
+        return format(reader.read(key), args);
     }
 }
