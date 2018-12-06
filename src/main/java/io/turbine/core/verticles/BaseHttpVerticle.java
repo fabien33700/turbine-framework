@@ -1,8 +1,10 @@
 package io.turbine.core.verticles;
 
 import io.reactivex.Single;
+import io.turbine.core.configuration.Configuration;
 import io.turbine.core.verticles.behaviors.HttpVerticle;
 import io.vertx.core.Context;
+import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.net.JksOptions;
@@ -26,6 +28,7 @@ import io.vertx.reactivex.core.http.HttpServer;
 * @see HttpServer
 * @author Fabien <fabien DOT lehouedec AT gmail DOT com>
 */
+@Configuration
 public abstract class BaseHttpVerticle extends BaseVerticle implements HttpVerticle {
 
     /**
@@ -115,5 +118,13 @@ public abstract class BaseHttpVerticle extends BaseVerticle implements HttpVerti
            If there is no one, using 80 in HTTP and 443 in HTTPS. */
         int defaultPort = useSsl() ? 443 : 80;
         return readConfig("port", defaultPort);
+    }
+
+    @Override
+    public void start(Future<Void> future) {
+        register(listen().subscribe(http -> {
+            logger.info("Server listening at " + port());
+            future.complete();
+        }));
     }
 }

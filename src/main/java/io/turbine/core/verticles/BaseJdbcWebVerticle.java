@@ -1,10 +1,10 @@
 package io.turbine.core.verticles;
 
-import io.reactivex.Completable;
-import io.reactivex.CompletableObserver;
 import io.reactivex.Single;
 import io.turbine.core.jdbc.QueryBuilder;
 import io.turbine.core.verticles.behaviors.JdbcVerticle;
+import io.vertx.core.Context;
+import io.vertx.core.Vertx;
 import io.vertx.ext.sql.SQLOptions;
 import io.vertx.reactivex.ext.jdbc.JDBCClient;
 import io.vertx.reactivex.ext.sql.SQLConnection;
@@ -22,25 +22,16 @@ public abstract class BaseJdbcWebVerticle extends BaseWebVerticle implements Jdb
     }
 
     @Override
-    protected CompletableChain initialize() {
-        // TODO Refactor with a method (avoid invoking anonymous new(), replace by lambda)
-        return super.initialize().append(new Completable() {
-             @Override
-             protected void subscribeActual(CompletableObserver s) {
-                 try {
-                     jdbc = createShared(vertx, jdbcConfiguration());
-                     connect()
-                         .doOnSuccess(connection -> {
-                             connection.close();
-                             logger.info("Asynchronous JDBC client ready, connection to the DBMS tested OK");
-                             s.onComplete();
-                         })
-                         .subscribe();
-                 } catch (Throwable t) {
-                     s.onError(t);
-                 }
-             }
-         });
+    public void init(Vertx vertx, Context context) {
+        super.init(vertx, context);
+
+        jdbc = createShared(this.vertx, jdbcConfiguration());
+        connect()
+            .doOnSuccess(connection -> {
+                connection.close();
+                logger.info("Asynchronous JDBC client ready, connection to the DBMS tested OK");
+            })
+            .subscribe();
     }
 
     @Override

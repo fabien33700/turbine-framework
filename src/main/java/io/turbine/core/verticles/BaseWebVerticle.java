@@ -26,7 +26,6 @@ import io.vertx.reactivex.ext.web.handler.BodyHandler;
 import java.lang.reflect.Method;
 import java.util.Map;
 
-import static io.reactivex.Completable.fromAction;
 import static io.reactivex.Single.just;
 import static io.turbine.core.web.router.Response.ok;
 
@@ -78,14 +77,7 @@ public abstract class BaseWebVerticle extends BaseHttpVerticle implements WebVer
             router = new ReactiveRouter(Router.router(this.vertx));
             router.route().handler(BodyHandler.create());
         }
-        register(serverErrors().subscribe(this::handleServerErrors));
-    }
-
-    @Override
-    protected CompletableChain initialize() {
-        return super.initialize().append(
-                fromAction(this::applyRequestMappings)
-        );
+        applyRequestMappings();
     }
 
     private void applyRequestMappings() {
@@ -132,17 +124,6 @@ public abstract class BaseWebVerticle extends BaseHttpVerticle implements WebVer
                 logger.debug("WARN ! No response method for this response type, use JSON response as default.");
                 return jsonResponse(requestHandler);
         }
-    }
-
-    private void handleServerErrors(Throwable t) {
-        if (t instanceof ServerErrorException) {
-            String uuid = ((ServerErrorException) t).getUuid();
-            logger.error("A server error exception has occurred : " + uuid, t.getCause());
-        }
-    }
-
-    protected Consumer<? super HttpServer> logServerStart() {
-        return server -> logger.info("Server started listening at port " + server.actualPort());
     }
 
     /**************************
@@ -206,8 +187,10 @@ public abstract class BaseWebVerticle extends BaseHttpVerticle implements WebVer
                 throw new ServerErrorException(internalEx);
             }
         } catch (HttpException httpEx) {
-            if (httpEx instanceof ServerErrorException)
-                serverErrors.onNext(httpEx);
+            if (httpEx instanceof ServerErrorException) {
+                String uuid = ((ServerErrorException) httpEx).getUuid();
+                logger.error("A server error exception has occurred : " + uuid, t.getCause());
+            }
 
             return just(
                     new Response(httpEx, httpEx.statusCode()));
