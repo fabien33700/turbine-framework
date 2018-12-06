@@ -112,6 +112,8 @@ public class EventFactory {
         private final int position;
         private final EventType eventType;
 
+        private final T first;
+
         EventImpl(List<T> source, EventType eventType,
                   final T item, int position) {
             this(source, eventType, singletonList(item), position);
@@ -123,6 +125,7 @@ public class EventFactory {
             this.eventType = eventType;
             this.items = new ArrayList<>(items);
             this.position = position;
+            this.first = items.iterator().next();
         }
 
         @Override
@@ -152,7 +155,7 @@ public class EventFactory {
 
         @Override
         public T first() {
-            return items().iterator().next();
+            return first;
         }
     }
 }

@@ -11,26 +11,18 @@ import io.turbine.core.verticles.behaviors.WebSocketVerticle;
 import io.turbine.core.ws.Message;
 import io.turbine.core.ws.WsConnection;
 import io.turbine.core.ws.codec.Codec;
+import io.turbine.core.ws.codec.ModelCodec;
 import io.turbine.core.ws.impl.MessageImpl;
 import io.turbine.core.ws.impl.WsConnectionImpl;
+import io.vertx.core.json.JsonObject;
 import io.vertx.reactivex.core.http.HttpServer;
 import io.vertx.reactivex.core.http.ServerWebSocket;
-
-import static java.util.Objects.requireNonNull;
-
 
 public abstract class BaseWebSocketVerticle<S, B> extends BaseHttpVerticle implements WebSocketVerticle<S, B> {
 
     protected final ReactiveList<WsConnection<S>> connections = new ReactiveListImpl<>();
     protected final Subject<Message<S, B>> messages = BehaviorSubject.create();
-    protected final Codec<B> codec;
-
-
-    protected BaseWebSocketVerticle(Codec<B> codec) {
-        super();
-        requireNonNull(codec, "codec");
-        this.codec = codec;
-    }
+    protected final Codec<B> codec = new ModelCodec<>(this::readBody);
 
     @Override
     public final Single<HttpServer> listen(int port) {
@@ -65,19 +57,23 @@ public abstract class BaseWebSocketVerticle<S, B> extends BaseHttpVerticle imple
         WsConnection<S> conn = new WsConnectionImpl<>(sender, ws);
         connections.add(conn);
 
-        ws.binaryMessageHandler(buffer -> {
+        ws.textMessageHandler(raw -> {
             try {
                 messages.onNext(
-                    new MessageImpl<>(conn, codec.decode(buffer)));
+                        new MessageImpl<>(conn, codec.decode(raw)));
             } catch (Exception e) {
                 logger.debug("Could not decode client message", e);
             }
         });
+
+        ws.closeHandler((v) -> connections.remove(conn));
     }
 
     protected abstract boolean accepts(ServerWebSocket ws);
 
     protected abstract S getRequestSender(ServerWebSocket ws) throws Exception;
+
+    protected abstract B readBody(JsonObject json) throws Exception;
 
     @Override
     public Observable<Message<S, B>> messages() {
@@ -85,6 +81,9 @@ public abstract class BaseWebSocketVerticle<S, B> extends BaseHttpVerticle imple
     }
 
     public ReactiveListObserver<WsConnection<S>> connections() {
-        return connections;
+        // Returning only observer to prevent user from accessing connections list !
+        return connections.getObserver();
     }
+
+
 }

@@ -1,12 +1,11 @@
 package io.turbine.core.ws;
 
-import java.time.Instant;
-import java.util.Optional;
+import io.turbine.core.json.JsonSerializable;
 
-public interface Message<S, B> {
+import java.time.Instant;
+
+public interface Message<S, B> extends JsonSerializable {
     Instant sentAt();
     B body();
     S sender();
-
-    void respond(B responseBody);
 }
