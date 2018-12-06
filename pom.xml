@@ -119,7 +119,6 @@
             <artifactId>jackson-datatype-jdk8</artifactId>
             <version>RELEASE</version>
         </dependency>
-
     </dependencies>
 
     <build>

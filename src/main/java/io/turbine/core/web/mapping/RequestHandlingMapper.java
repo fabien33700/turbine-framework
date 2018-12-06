@@ -1,7 +1,7 @@
 package io.turbine.core.web.mapping;
 
 import io.reactivex.Single;
-import io.turbine.core.errors.exceptions.verticles.RequestMappingException;
+import io.turbine.core.errors.exceptions.router.RequestMappingException;
 import io.turbine.core.verticles.BaseWebVerticle;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;

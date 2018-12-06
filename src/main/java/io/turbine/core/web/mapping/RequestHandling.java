@@ -11,13 +11,6 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 public @interface RequestHandling {
-    /**
-     * Alias for path()
-     * @return
-     */
-    // TODO Implement
-    String value() default "/";
-
     String path() default "/";
     HttpMethod method() default HttpMethod.GET;
     BackpressureStrategy strategy() default BackpressureStrategy.DROP;
