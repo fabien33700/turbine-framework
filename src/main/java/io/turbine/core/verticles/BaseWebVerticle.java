@@ -27,6 +27,7 @@ import java.lang.reflect.Method;
 import java.util.Map;
 
 import static io.reactivex.Single.just;
+import static io.turbine.core.utils.Utils.orElseGet;
 import static io.turbine.core.web.router.Response.ok;
 
 
@@ -91,17 +92,19 @@ public abstract class BaseWebVerticle extends BaseHttpVerticle implements WebVer
 
             @SuppressWarnings("unchecked") final RequestHandler requestHandler = (rc) -> {
                 try {
-                    /* FIXME In case of raw response (not wrapped in a Response object),
+                    /* In case of raw response (not wrapped in a Response object),
                      * we create a 200 OK by default */
-                    return ((Single) method.invoke(this, rc))
-                            .map(value -> (value instanceof Response) ? value : ok(value));
+                    Single single = (Single) method.invoke(this, rc);
+                    return single.map(value ->
+                            (value instanceof Response) ? value : ok(value));
                 } catch (ReflectiveOperationException ex) {
                     throw new RuntimeException("Unable to call the action method " + method + ".", ex);
                 }
             };
 
-            ResponseTypeEnum responseType = (method.isAnnotationPresent(ResponseType.class)) ?
-                    method.getAnnotation(ResponseType.class).value() : ResponseTypeEnum.JSON;
+            ResponseType responseTypeAnno = method.getAnnotation(ResponseType.class);
+            ResponseTypeEnum responseType =
+                    orElseGet(responseTypeAnno, ResponseType::value, ResponseTypeEnum.JSON);
 
             register(
                     flowable.doOnNext( getSuitableResponseTypeHandler(responseType, requestHandler))
@@ -117,11 +120,8 @@ public abstract class BaseWebVerticle extends BaseHttpVerticle implements WebVer
     {
         switch (responseType) {
             case XML: return xmlResponse(requestHandler);
-            case JSON: return jsonResponse(requestHandler);
             case TEXT: return textResponse(requestHandler);
             default:
-                // FIXME supposed never-reachable
-                logger.debug("WARN ! No response method for this response type, use JSON response as default.");
                 return jsonResponse(requestHandler);
         }
     }

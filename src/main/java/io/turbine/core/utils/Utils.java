@@ -7,6 +7,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
 import java.util.*;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -14,16 +15,6 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 
 public class Utils {
-    private static final Class<?>[] PRIMITIVES_WRAPPER_AND_TYPES = new Class<?>[] {
-        Boolean.class, Boolean.TYPE,
-        Byte.class, Byte.TYPE,
-        Character.class, Character.TYPE,
-        Double.class, Double.TYPE,
-        Float.class, Float.TYPE,
-        Integer.class, Integer.TYPE,
-        Long.class, Long.TYPE,
-        Short.class, Short.TYPE
-    };
 
     public static String fromInputStream(final InputStream is) {
         if (is == null)
@@ -36,36 +27,56 @@ public class Utils {
 
     }
 
-    public static List<Class<?>> getClassHierarchy(Class<?> baseClass) {
-        List<Class<?>> hierarchy = new ArrayList<>();
-        Class<?> cursor = baseClass;
-        while (cursor != null) {
-            hierarchy.add(cursor);
-            cursor = cursor.getSuperclass();
+    public static class Reflection {
+
+        private static final Class<?>[] PRIMITIVES_WRAPPER_AND_TYPES = new Class<?>[] {
+                Boolean.class, Boolean.TYPE,
+                Byte.class, Byte.TYPE,
+                Character.class, Character.TYPE,
+                Double.class, Double.TYPE,
+                Float.class, Float.TYPE,
+                Integer.class, Integer.TYPE,
+                Long.class, Long.TYPE,
+                Short.class, Short.TYPE
+        };
+
+        public static List<Class<?>> getClassHierarchy(Class<?> baseClass) {
+            List<Class<?>> hierarchy = new ArrayList<>();
+            Class<?> cursor = baseClass;
+            while (cursor != null) {
+                hierarchy.add(cursor);
+                cursor = cursor.getSuperclass();
+            }
+            java.util.Collections.reverse(hierarchy);
+            return hierarchy;
         }
-        Collections.reverse(hierarchy);
-        return hierarchy;
+
+        public static boolean isPrimitiveOrWrapper(Object response) {
+            final Class<?> clazz = response.getClass();
+            return clazz.isPrimitive() ||
+                    asList(PRIMITIVES_WRAPPER_AND_TYPES).contains(clazz);
+        }
     }
 
-    public static <E, C extends Collection<E>> C fromIterable(Iterable<E> items, Supplier<C> factory) {
-        C collection = factory.get();
-        items.forEach(collection::add);
+    public static class Collections {
+        public static <E, C extends Collection<E>> C fromIterable(Iterable<E> items, Supplier<C> factory) {
+            C collection = factory.get();
+            items.forEach(collection::add);
 
-        return collection;
-    }
+            return collection;
+        }
 
-    public static <E> List<E> fromIterable(Iterable<E> items) {
-        return fromIterable(items, ArrayList::new);
-    }
-
-    public static boolean isPrimitiveOrWrapper(Object response) {
-        final Class<?> clazz = response.getClass();
-        return clazz.isPrimitive() ||
-                asList(PRIMITIVES_WRAPPER_AND_TYPES).contains(clazz);
+        public static <E> List<E> fromIterable(Iterable<E> items) {
+            return fromIterable(items, ArrayList::new);
+        }
     }
 
     public static <E> E orElse(E expression, E defaultValue) {
         return expression == null ? defaultValue : expression;
+    }
+
+    public static <E, P> P orElseGet(E expression, Function<E, P> propertyAccessor, P defaultValue) {
+        return expression == null ? defaultValue : propertyAccessor.apply(expression);
     }
 
     public static <E> E orElse(Supplier<E> provider, E defaultValue) {

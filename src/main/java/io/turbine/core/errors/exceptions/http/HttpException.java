@@ -8,6 +8,7 @@ import java.time.Instant;
 
 import static io.netty.handler.codec.http.HttpResponseStatus.valueOf;
 import static io.turbine.core.json.JsonBuilder.create;
+import static io.turbine.core.utils.Utils.orElse;
 
 /**
  * The base exception for representing a HTTP error that can be sended back to the client.
@@ -63,7 +64,7 @@ public abstract class HttpException extends RuntimeException implements JsonSeri
      */
     @Override
     public String getMessage() {
-        return super.getMessage() != null ? super.getMessage() : defaultMessage();
+        return orElse(super.getMessage(), defaultMessage());
     }
 
     /**
