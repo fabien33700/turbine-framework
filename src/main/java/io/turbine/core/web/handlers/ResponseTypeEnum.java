@@ -8,7 +8,7 @@ public enum ResponseTypeEnum {
     TEXT(plainTextAdapter()),
     XML(xmlAdapter());
 
-    private ResponseAdapter responseAdapter;
+    private final ResponseAdapter responseAdapter;
 
 
     ResponseTypeEnum(ResponseAdapter responseAdapter) {

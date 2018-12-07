@@ -5,8 +5,6 @@ import io.reactivex.Flowable;
 import io.reactivex.Observable;
 import io.reactivex.subjects.BehaviorSubject;
 import io.reactivex.subjects.Subject;
-import io.turbine.core.logging.Logger;
-import io.turbine.core.logging.LoggerFactory;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.ext.web.Route;
 import io.vertx.reactivex.ext.web.RoutingContext;

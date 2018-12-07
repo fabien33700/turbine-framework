@@ -12,8 +12,8 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
-import static io.turbine.core.utils.Utils.fromInputStream;
 import static io.turbine.core.utils.Utils.Strings.format;
+import static io.turbine.core.utils.Utils.fromInputStream;
 import static java.util.Objects.requireNonNull;
 
 public class MessageResolver {
@@ -31,7 +31,7 @@ public class MessageResolver {
         return instance;
     }
 
-    private Map<Locale, JsonObject> localizedMessages = new HashMap<>();
+    private final Map<Locale, JsonObject> localizedMessages = new HashMap<>();
 
     private MessageResolver() {
         JsonObject messages = new JsonObject();

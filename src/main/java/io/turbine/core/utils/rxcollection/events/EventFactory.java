@@ -5,9 +5,7 @@ import java.util.Collection;
 import java.util.List;
 
 import static io.turbine.core.utils.rxcollection.events.EventType.*;
-import static java.util.Collections.singletonList;
-import static java.util.Collections.unmodifiableCollection;
-import static java.util.Collections.unmodifiableList;
+import static java.util.Collections.*;
 
 /**
  * A factory for creating list changes event implementation.

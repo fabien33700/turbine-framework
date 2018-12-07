@@ -18,7 +18,7 @@ import static java.util.stream.Collector.of;
 
 public final class JsonFormat {
 
-    private static Collector<Object, ?, JsonArray> JSON_ARRAY_COLLECTOR = of(
+    private static final Collector<Object, ?, JsonArray> JSON_ARRAY_COLLECTOR = of(
             JsonArray::new, JsonArray::add, JsonArray::addAll);
 
     public static Collector<Object, ?, JsonArray> jsonArrayCollector() {

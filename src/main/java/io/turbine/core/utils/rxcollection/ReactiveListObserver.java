@@ -3,8 +3,6 @@ package io.turbine.core.utils.rxcollection;
 import io.reactivex.Observable;
 import io.turbine.core.utils.rxcollection.events.Event;
 
-import java.util.List;
-
 /**
  * The standard behavior of a reactive list observer, which means
  * an object that must provide the Observable sources of list changes events.

@@ -10,7 +10,6 @@ import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import static java.text.NumberFormat.Field.DECIMAL_SEPARATOR;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 

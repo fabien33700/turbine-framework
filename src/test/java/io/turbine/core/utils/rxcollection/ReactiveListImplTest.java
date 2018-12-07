@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 class ReactiveListImplTest {
 
-    static List<String> ELEMENTS = asList(
+    static final List<String> ELEMENTS = asList(
             "Sansa", "Robb", "Arya", "Jon", "Rickon", "Bran", "Ned"
     );
 

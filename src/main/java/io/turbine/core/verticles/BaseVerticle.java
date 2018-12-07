@@ -36,7 +36,7 @@ public abstract class BaseVerticle extends AbstractVerticle {
     /**
      * A list for storing all the verticles subscriptions to observables
      */
-    private List<Disposable> subscriptions = new ArrayList<>();
+    private final List<Disposable> subscriptions = new ArrayList<>();
 
     /**
      * The configuration reader
@@ -61,13 +61,11 @@ public abstract class BaseVerticle extends AbstractVerticle {
 
     /**
      * A method to register a Disposable into verticle subscriptions.
-     * @param disposable The disposable to register
      * @param <D> The type of Disposable
-     * @return The registered Disposable instance
+     * @param disposable The disposable to register
      */
-    protected <D extends Disposable> D register(D disposable) {
+    protected <D extends Disposable> void register(D disposable) {
         subscriptions.add(disposable);
-        return disposable;
     }
 
     /**

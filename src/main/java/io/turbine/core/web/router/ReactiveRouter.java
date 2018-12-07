@@ -13,7 +13,7 @@ import java.util.List;
 
 public class ReactiveRouter {
 
-    private Router delegate;
+    private final Router delegate;
 
     public ReactiveRouter(Router delegate) {
         this.delegate = delegate;
