@@ -1,5 +1,6 @@
 package io.turbine.core.json;
 
+import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 
 import java.util.Iterator;
@@ -102,6 +103,12 @@ public final class JsonBuilder {
         return create()
             .put(keys, valueFn)
             .build();
+    }
+
+    @SuppressWarnings("unchecked")
+    public static JsonObject fromString(String json) {
+        Map<String, Object> map = (Map<String, Object>) Json.decodeValue(json, Map.class);
+        return new JsonObject(map);
     }
 
 }

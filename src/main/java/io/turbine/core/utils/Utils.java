@@ -1,5 +1,7 @@
 package io.turbine.core.utils;
 
+import org.apache.commons.lang3.math.NumberUtils;
+
 import java.io.*;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -8,6 +10,7 @@ import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import static java.text.NumberFormat.Field.DECIMAL_SEPARATOR;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 
@@ -83,6 +86,70 @@ public class Utils {
         }
     }
 
+    public static Object parsePrimitiveValueFromString(String input) {
+        return parsePrimitiveValueFromString(input, false);
+    }
+
+    public static Object parsePrimitiveValueFromString(String input, boolean useStrictTyping) {
+        // null value case
+        if (input == null || input.trim().isEmpty()) {
+            return null;
+        }
+        input = input.trim();
+        // input is a parsable number
+        if (NumberUtils.isParsable(input)) {
+
+            // input numer is decimal
+            if (input.contains(".")) {
+                double doubleVal = Double.parseDouble(input);
+                // try parsing it to float if it is in bounds
+                if (doubleVal >= Float.MIN_VALUE &&
+                    doubleVal <= Float.MAX_VALUE) {
+                    return (float) doubleVal;
+                }
+                return doubleVal;
+            } else {
+                long longVal = Long.parseLong(input);
+                // try parsing it to byte if it is in bounds
+                // (only if useStrictTyping is true)
+                if (useStrictTyping &&
+                    longVal >= Byte.MIN_VALUE &&
+                    longVal <= Byte.MAX_VALUE)
+                {
+                    return (byte) longVal;
+                }
+                // try parsing it to short if it is in bounds
+                // (only if useStrictTyping is true)
+                if (useStrictTyping &&
+                        longVal >= Short.MIN_VALUE &&
+                        longVal <= Short.MAX_VALUE)
+                {
+                    return (short) longVal;
+                }
+                // try parsing it to int if it is in bounds
+                if (longVal >= Integer.MIN_VALUE &&
+                    longVal <= Integer.MAX_VALUE) {
+                    return (int) longVal;
+                }
+                return longVal;
+            }
+        } else {
+            // try parsing it to char
+            // (only if useStrictTyping is true)
+            if (useStrictTyping && input.length() == 1)
+                return input.charAt(0);
+
+            switch (input.toLowerCase()) {
+                case "false":
+                    return false;
+                case "true":
+                    return true;
+                default:
+                    return input;
+            }
+        }
+    }
+
     public static final class Strings extends org.apache.commons.lang3.StringUtils {
 
         public static String getStackTraceAsString(Throwable t) {
@@ -108,21 +175,46 @@ public class Utils {
 
     public static class Web {
 
+
+        /**
+         * Parse a query string from a HTTP GET request and returns
+         * a map containing all parameters from it.
+         * If a possible "?" prefix character is found, it will be ignored.
+         * Note that it try to resolve numeric value as Java number types.
+         * @param query The query string
+         * @return A map containing parameters (keys and values)
+         */
         @SuppressWarnings("unchecked")
         public static Map<String,Object> parseQueryString(String query) {
+            // Creating the resulting map
             Map<String, Object> params = new HashMap<>();
 
+            // Ensuring query string is parsable
             if (query != null && !query.trim().isEmpty()) {
+                // Stripping the possible "?" prefix
+                if (query.startsWith("?")) {
+                    query = query.substring(1);
+                }
+
+
+                // For each tuple (a key/value pair, separated by '&' delimiter)
                 for (String tuple : query.split("&")) {
+                    // Extracting the string before the '=' delimiter
+                    // and ignoring '[]' (used for array parameters)
                     String key = tuple.substring(0, tuple.indexOf("="))
                             .replaceAll("\\[]", "");
-                    String value = tuple.substring(tuple.indexOf("=") + 1);
+                    // Extracting value after the '=' delimiter
+                    String strValue = tuple.substring(tuple.indexOf("=") + 1);
+                    Object value = parsePrimitiveValueFromString(strValue);
 
+                    // If a duplicate key tuple is found
                     if (params.containsKey(key)) {
                         Object actual = params.get(key);
+                        // we replace the single existing value with an ArrayList
                         if (!(actual instanceof ArrayList))
                             params.put(key, new ArrayList<>(singletonList(actual)));
 
+                        // Adding the new value to the ArrayList
                         ((ArrayList<Object>) params.get(key)).add(value);
                     } else {
                         params.put(key, value);
