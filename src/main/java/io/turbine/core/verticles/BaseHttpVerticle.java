@@ -1,14 +1,18 @@
 package io.turbine.core.verticles;
 
+import io.reactivex.Completable;
 import io.reactivex.Single;
 import io.turbine.core.configuration.Configuration;
 import io.turbine.core.verticles.behaviors.HttpVerticle;
 import io.vertx.core.Context;
-import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.net.JksOptions;
 import io.vertx.reactivex.core.http.HttpServer;
+
+import static io.reactivex.Completable.fromAction;
+import static io.reactivex.Completable.fromSingle;
+
 
 /**
 * Defines a base implementation for all HTTP verticles in the application.
@@ -121,10 +125,9 @@ public abstract class BaseHttpVerticle extends BaseVerticle implements HttpVerti
     }
 
     @Override
-    public void start(Future<Void> future) {
-        register(listen().subscribe(http -> {
-            logger.info("Server listening at " + port());
-            future.complete();
-        }));
+    public Completable rxStart() {
+        return super.rxStart()
+                .concatWith(fromSingle(listen()))
+                .concatWith(fromAction(() -> logger.info("Server listening at " + port()) ) );
     }
 }

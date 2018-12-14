@@ -6,7 +6,7 @@ import io.reactivex.subjects.BehaviorSubject;
 import io.reactivex.subjects.Subject;
 import io.turbine.core.utils.rxcollection.ReactiveList;
 import io.turbine.core.utils.rxcollection.ReactiveListImpl;
-import io.turbine.core.utils.rxcollection.ReactiveListObserver;
+import io.turbine.core.utils.rxcollection.events.Event;
 import io.turbine.core.verticles.behaviors.WebSocketVerticle;
 import io.turbine.core.ws.Message;
 import io.turbine.core.ws.WsConnection;
@@ -20,7 +20,7 @@ import io.vertx.reactivex.core.http.ServerWebSocket;
 
 public abstract class BaseWebSocketVerticle<S, B> extends BaseHttpVerticle implements WebSocketVerticle<S, B> {
 
-    protected final ReactiveList<WsConnection<S>> connections = new ReactiveListImpl<>();
+    private final ReactiveList<WsConnection<S>> connections = new ReactiveListImpl<>();
     protected final Subject<Message<S, B>> messages = BehaviorSubject.create();
     protected final Codec<B> codec = new ModelCodec<>(this::readBody);
 
@@ -69,21 +69,34 @@ public abstract class BaseWebSocketVerticle<S, B> extends BaseHttpVerticle imple
         ws.closeHandler((v) -> connections.remove(conn));
     }
 
-    protected abstract boolean accepts(ServerWebSocket ws);
+    protected boolean accepts(ServerWebSocket ws) {
+        return true;
+    }
 
     protected abstract S getRequestSender(ServerWebSocket ws) throws Exception;
 
     protected abstract B readBody(JsonObject json) throws Exception;
 
     @Override
+    public void broadcast(final Message<S, B> message) {
+        connections.forEach(
+            conn -> conn.webSocket().writeTextMessage(
+                    message.toJsonString()
+            ));
+    }
+
+    @Override
     public Observable<Message<S, B>> messages() {
         return messages;
     }
 
-    public ReactiveListObserver<WsConnection<S>> connections() {
-        // Returning only observer to prevent user from accessing connections list !
-        return connections.getObserver();
+    public Observable<WsConnection<S>> connections() {
+        return connections.additions()
+                .map(Event::first);
     }
 
-
+    public Observable<WsConnection<S>> disconnections() {
+        return connections.deletions()
+                .map(Event::first);
+    }
 }

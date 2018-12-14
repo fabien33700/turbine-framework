@@ -3,6 +3,7 @@ package io.turbine.core.utils;
 import org.apache.commons.lang3.math.NumberUtils;
 
 import java.io.*;
+import java.lang.reflect.ParameterizedType;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
@@ -13,6 +14,8 @@ import java.util.stream.Collectors;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
+import static java.util.stream.Collectors.toMap;
+import static java.util.stream.Stream.of;
 
 public class Utils {
 
@@ -51,6 +54,11 @@ public class Utils {
             return hierarchy;
         }
 
+        public static Class<?> getGenericTypeOf(Class<?> sourceType) {
+            return (Class<?>) ((ParameterizedType) sourceType.getGenericSuperclass())
+                            .getActualTypeArguments()[0];
+        }
+
         public static boolean isPrimitiveOrWrapper(Object response) {
             final Class<?> clazz = response.getClass();
             return clazz.isPrimitive() ||
@@ -68,6 +76,39 @@ public class Utils {
 
         public static <E> List<E> fromIterable(Iterable<E> items) {
             return fromIterable(items, ArrayList::new);
+        }
+    }
+
+    public static class MapBuilder {
+        public interface Tuple<K, V> {
+            K key();
+            V value();
+        }
+        final static class TupleImpl<K, V> implements Tuple<K, V> {
+            private final K key;
+            private final V value;
+
+            TupleImpl(K key, V value) {
+                this.key = key;
+                this.value = value;
+            }
+
+            @Override
+            public K key() {
+                return key;
+            }
+
+            @Override
+            public V value() {
+                return value;
+            }
+        }
+        @SafeVarargs
+        public static <K, V> Map<K, V> mapOf(Tuple<K, V> ... tuples) {
+             return of(tuples).collect(toMap(Tuple::key, Tuple::value));
+        }
+        public static <K, V> Tuple<K, V> tuple(K key, V value) {
+            return new TupleImpl<>(key, value);
         }
     }
 

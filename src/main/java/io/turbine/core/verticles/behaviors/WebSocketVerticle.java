@@ -1,7 +1,6 @@
 package io.turbine.core.verticles.behaviors;
 
 import io.reactivex.Observable;
-import io.turbine.core.utils.rxcollection.ReactiveListObserver;
 import io.turbine.core.ws.Message;
 import io.turbine.core.ws.WsConnection;
 
@@ -18,13 +17,18 @@ import io.turbine.core.ws.WsConnection;
  * @author Fabien <fabien DOT lehouedec AT gmail DOT com>
  */
 public interface WebSocketVerticle<S, B> extends HttpVerticle  {
+
+    void broadcast(Message<S, B> message);
+
     /**
      * The reactive observable source of Message objects.
      * @return An Observable of Message
      */
     Observable<Message<S, B>> messages();
 
-    ReactiveListObserver<WsConnection<S>> connections();
+    Observable<WsConnection<S>> connections();
+
+    Observable<WsConnection<S>> disconnections();
 
     boolean allowAnonymous();
 }

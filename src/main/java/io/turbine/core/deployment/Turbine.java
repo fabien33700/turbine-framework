@@ -1,9 +1,9 @@
-package io.turbine.core.launcher;
+package io.turbine.core.deployment;
 
 public abstract class Turbine {
 
     public static void runApplication(String[] args, Class<?>... classes) {
-        new Deployer(args, classes).run();
+        VerticleDeployer.getInstance(args).deployVerticle(classes);
     }
 
     public static void runApplication(Class<?>... classes) {
