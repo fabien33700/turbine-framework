@@ -1,4 +1,4 @@
-package io.turbine.core.utils.rxcollection;
+package io.turbine.core.utils.rxcollection.observers;
 
 import io.reactivex.Observable;
 import io.turbine.core.utils.rxcollection.events.ListEvent;

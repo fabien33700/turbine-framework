@@ -7,7 +7,7 @@ import java.util.List;
  * @param <T> The type of list item concerned by the event
  * @author Fabien <fabien DOT lehouedec AT gmail DOT com>
  */
-public interface Event<T> {
+public interface ListEvent<T> {
     /**
      * A sequence of the items affected by a previous operation.
      * @return A Iterable instance of T items

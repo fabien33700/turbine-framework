@@ -1,7 +1,6 @@
-package io.turbine.core.utils.rxcollection;
+package io.turbine.core.utils.rxcollection.observers;
 
 import io.reactivex.Observable;
-import io.turbine.core.utils.rxcollection.events.ListEvent;
 import io.turbine.core.utils.rxcollection.events.MapEvent;
 
 public interface ReactiveMapObserver<K, V> {

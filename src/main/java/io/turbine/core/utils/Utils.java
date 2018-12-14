@@ -103,6 +103,9 @@ public class Utils {
                 return value;
             }
         }
+        public static <K, V> Map<K, V> mapOf(K key, V value) {
+            return mapOf(tuple(key, value));
+        }
         @SafeVarargs
         public static <K, V> Map<K, V> mapOf(Tuple<K, V> ... tuples) {
              return of(tuples).collect(toMap(Tuple::key, Tuple::value));

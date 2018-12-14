@@ -7,11 +7,11 @@ import io.vertx.core.json.JsonObject;
 
 import static java.util.Objects.requireNonNull;
 
-public class ModelCodec<M> implements Codec<M> {
+public class MessageCodec<M> implements Codec<M> {
 
     private final Function<JsonObject, M> unmarshallFn;
 
-    public ModelCodec(Function<JsonObject, M> unmarshallFn) {
+    public MessageCodec(Function<JsonObject, M> unmarshallFn) {
         requireNonNull(unmarshallFn, "unmarshalling Json to model function");
         this.unmarshallFn = unmarshallFn;
     }

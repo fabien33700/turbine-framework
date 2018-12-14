@@ -16,7 +16,7 @@ import io.turbine.core.ws.WsConnection;
  *
  * @author Fabien <fabien DOT lehouedec AT gmail DOT com>
  */
-public interface WebSocketVerticle<S, B> extends HttpVerticle  {
+public interface WebSocketVerticle<S, B>  {
 
     void broadcast(Message<S, B> message);
 
@@ -24,11 +24,10 @@ public interface WebSocketVerticle<S, B> extends HttpVerticle  {
      * The reactive observable source of Message objects.
      * @return An Observable of Message
      */
-    Observable<Message<S, B>> messages();
-
     Observable<WsConnection<S>> connections();
 
     Observable<WsConnection<S>> disconnections();
 
-    boolean allowAnonymous();
+    Observable<Message<S, B>> messages();
+
 }

@@ -8,6 +8,7 @@ import io.turbine.core.deployment.VerticleDeployer;
 import io.turbine.core.deployment.VerticleFactory;
 import io.turbine.core.utils.Composite;
 import io.turbine.core.verticles.behaviors.Verticle;
+import io.turbine.core.verticles.support.Parameter;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
@@ -24,6 +25,7 @@ import static io.reactivex.Completable.complete;
 import static io.reactivex.Completable.fromAction;
 import static io.turbine.core.deployment.VerticleFactory.fromClass;
 import static io.turbine.core.deployment.VerticleFactory.fromSupplier;
+import static java.util.Arrays.asList;
 import static java.util.Collections.unmodifiableList;
 import static java.util.Optional.ofNullable;
 
@@ -90,6 +92,11 @@ public abstract class BaseVerticle extends AbstractVerticle implements Verticle,
      */
     protected <D extends Disposable> void register(D disposable) {
         subscriptions.add(disposable);
+    }
+
+    @SafeVarargs
+    protected final <D extends Disposable> void register(D... disposables) {
+        subscriptions.addAll(asList(disposables));
     }
 
     /**

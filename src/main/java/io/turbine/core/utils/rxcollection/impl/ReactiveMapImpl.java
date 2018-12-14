@@ -1,10 +1,12 @@
-package io.turbine.core.utils.rxcollection;
+package io.turbine.core.utils.rxcollection.impl;
 
 import io.reactivex.Observable;
 import io.reactivex.subjects.BehaviorSubject;
 import io.reactivex.subjects.Subject;
+import io.turbine.core.utils.rxcollection.ReactiveMap;
 import io.turbine.core.utils.rxcollection.events.EventType;
 import io.turbine.core.utils.rxcollection.events.MapEvent;
+import io.turbine.core.utils.rxcollection.observers.ReactiveMapObserver;
 
 import java.util.*;
 import java.util.function.BiFunction;

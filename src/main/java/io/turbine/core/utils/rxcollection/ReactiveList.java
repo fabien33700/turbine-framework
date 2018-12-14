@@ -1,5 +1,7 @@
 package io.turbine.core.utils.rxcollection;
 
+import io.turbine.core.utils.rxcollection.observers.ReactiveListObserver;
+
 import java.util.List;
 
 /**

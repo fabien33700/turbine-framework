@@ -1,27 +1,27 @@
 package io.turbine.core.utils.rxcollection.events;
 
-import java.util.List;
+import java.util.Map;
 
 /**
  * The standard structure of a list change event.
- * @param <T> The type of list item concerned by the event
+ * @param <K> The type of map key concerned by the event
+ * @param <V> The type of map value concerned by the vent
  * @author Fabien <fabien DOT lehouedec AT gmail DOT com>
  */
-public interface ListEvent<T> {
+public interface MapEvent<K, V> {
     /**
      * A sequence of the items affected by a previous operation.
      * @return A Iterable instance of T items
      */
-    Iterable<T> items();
+    Iterable<K> keys();
 
     /**
-     * If available, the position at which item(s) had been inserted/removed/modified.
-     * Position will not be available for List operations that can potentially affect items
-     * in a discontinuous way, such as removeAll(), retainsAll() or for operation for which
-     * the position information is not pertinent such as clear().
-     * @return The position of first inserted/deleted/modified item
+     *
+     * @return
      */
-    int position();
+    Iterable<V> values();
+
+    Iterable<Map.Entry<? extends K, ? extends V>> entries();
 
     /**
      * Gives the number of affected items.
@@ -34,7 +34,7 @@ public interface ListEvent<T> {
      * A unmodifiable reference of the event's source list.
      * @return A unmodifiable list
      */
-    List<T> source();
+    Map<K, V> source();
 
     /**
      * The type of the event.
@@ -46,5 +46,7 @@ public interface ListEvent<T> {
      * An utility method to get the first affected item.
      * @return The first affected T item
      */
-    T first();
+    K firstKey();
+
+    V firstValue();
 }

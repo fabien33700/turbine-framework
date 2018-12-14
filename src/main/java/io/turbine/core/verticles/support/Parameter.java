@@ -1,4 +1,4 @@
-package io.turbine.core.verticles;
+package io.turbine.core.verticles.support;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
