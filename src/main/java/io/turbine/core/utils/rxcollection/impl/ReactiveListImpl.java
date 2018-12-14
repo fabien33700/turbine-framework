@@ -3,7 +3,7 @@ package io.turbine.core.utils.rxcollection;
 import io.reactivex.Observable;
 import io.reactivex.subjects.BehaviorSubject;
 import io.reactivex.subjects.Subject;
-import io.turbine.core.utils.rxcollection.events.Event;
+import io.turbine.core.utils.rxcollection.events.ListEvent;
 import io.turbine.core.utils.rxcollection.events.EventType;
 
 import java.util.*;
@@ -23,7 +23,7 @@ public class ReactiveListImpl<T> implements ReactiveList<T> {
     /**
      * A subject for emitting all events
      */
-    private final Subject<Event<T>> events = BehaviorSubject.create();
+    private final Subject<ListEvent<T>> events = BehaviorSubject.create();
 
     /**
      * A standard ReactiveListObserver internal implementation, that uses the
@@ -32,17 +32,17 @@ public class ReactiveListImpl<T> implements ReactiveList<T> {
     final class ReactiveListObserverImpl implements ReactiveListObserver<T> {
         
         @Override
-        public Observable<Event<T>> additions() {
+        public Observable<ListEvent<T>> additions() {
             return events.filter(e -> e.eventType() == EventType.ADDITION);
         }
 
         @Override
-        public Observable<Event<T>> deletions() {
+        public Observable<ListEvent<T>> deletions() {
             return events.filter(e -> e.eventType() == EventType.DELETION);
         }
 
         @Override
-        public Observable<Event<T>> modifications() {
+        public Observable<ListEvent<T>> modifications() {
             return events.filter(e -> e.eventType() == EventType.MODIFICATION);
         }
     }
@@ -86,17 +86,17 @@ public class ReactiveListImpl<T> implements ReactiveList<T> {
     }
 
     @Override
-    public Observable<Event<T>> additions() {
+    public Observable<ListEvent<T>> additions() {
         return observer.additions();
     }
 
     @Override
-    public Observable<Event<T>> deletions() {
+    public Observable<ListEvent<T>> deletions() {
         return observer.deletions();
     }
 
     @Override
-    public Observable<Event<T>> modifications() {
+    public Observable<ListEvent<T>> modifications() {
         return observer.modifications();
     }
 
@@ -138,7 +138,7 @@ public class ReactiveListImpl<T> implements ReactiveList<T> {
     public boolean add(T t) {
         boolean success = delegate.add(t);
         if (success)
-            events.onNext(newAdditionEvent(this, t, size()));
+            events.onNext(newAdditionListEvent(this, t, size()));
 
         return success;
     }
@@ -150,7 +150,7 @@ public class ReactiveListImpl<T> implements ReactiveList<T> {
         int pos = delegate.indexOf(t);
         boolean success = delegate.remove(o);
         if (success)
-            events.onNext(newDeletionEvent(this, t, pos));
+            events.onNext(newDeletionListEvent(this, t, pos));
         return success;
     }
 
@@ -163,7 +163,7 @@ public class ReactiveListImpl<T> implements ReactiveList<T> {
     public boolean addAll(Collection<? extends T> c) {
         boolean success = delegate.addAll(c);
         if (success)
-            events.onNext(newAdditionEvent(this, c, size()));
+            events.onNext(newAdditionListEvent(this, c, size()));
         return success;
     }
 
@@ -171,7 +171,7 @@ public class ReactiveListImpl<T> implements ReactiveList<T> {
     public boolean addAll(int index, Collection<? extends T> c) {
         boolean success = delegate.addAll(index, c);
         if (success)
-            events.onNext(newAdditionEvent(this, c, index));
+            events.onNext(newAdditionListEvent(this, c, index));
         return success;
     }
 
@@ -181,7 +181,7 @@ public class ReactiveListImpl<T> implements ReactiveList<T> {
         Collection<T> ct = (Collection<T>) c;
         boolean success = delegate.removeAll(c);
         if (success)
-            events.onNext(newDeletionEvent(this, ct, -1));
+            events.onNext(newDeletionListEvent(this, ct, -1));
         return success;
     }
 
@@ -193,14 +193,14 @@ public class ReactiveListImpl<T> implements ReactiveList<T> {
                 .collect(Collectors.toList());
         boolean success = delegate.retainAll(c);
         if (success)
-            events.onNext(newDeletionEvent(this, excluded, -1));
+            events.onNext(newDeletionListEvent(this, excluded, -1));
         return success;
     }
 
     @Override
     public void clear() {
         List<T> deleted = unmodifiableList(new ArrayList<>(delegate));
-        events.onNext(newDeletionEvent(this, deleted, -1));
+        events.onNext(newDeletionListEvent(this, deleted, -1));
         delegate.clear();
     }
 
@@ -211,20 +211,20 @@ public class ReactiveListImpl<T> implements ReactiveList<T> {
 
     @Override
     public T set(int index, T element) {
-        events.onNext(newModificationEvent(this, element, index));
+        events.onNext(newModificationListEvent(this, element, index));
         return delegate.set(index, element);
     }
 
     @Override
     public void add(int index, T element) {
         delegate.add(index, element);
-        events.onNext(newAdditionEvent(this, element, index));
+        events.onNext(newAdditionListEvent(this, element, index));
     }
 
     @Override
     public T remove(int index) {
         T deleted = delegate.remove(index);
-        events.onNext(newDeletionEvent(this, deleted, index));
+        events.onNext(newDeletionListEvent(this, deleted, index));
         return deleted;
     }
 

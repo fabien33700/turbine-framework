@@ -1,7 +1,7 @@
 package io.turbine.core.utils.rxcollection;
 
 import io.reactivex.Observable;
-import io.turbine.core.utils.rxcollection.events.Event;
+import io.turbine.core.utils.rxcollection.events.ListEvent;
 
 /**
  * The standard behavior of a reactive list observer, which means
@@ -13,20 +13,20 @@ public interface ReactiveListObserver<T> {
 
     /**
      * An observable source of list additions events.
-     * @return A Observable of Event
+     * @return A Observable of ListEvent
      */
-    Observable<Event<T>> additions();
+    Observable<ListEvent<T>> additions();
 
     /**
      * An observable source of list deletions events.
-     * @return A Observable of Event
+     * @return A Observable of ListEvent
      */
-    Observable<Event<T>> deletions();
+    Observable<ListEvent<T>> deletions();
 
     /**
      * An observable source of list modifications events.
-     * @return A Observable of Event
+     * @return A Observable of ListEvent
      */
-    Observable<Event<T>> modifications();
+    Observable<ListEvent<T>> modifications();
 
 }
