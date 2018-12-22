@@ -14,7 +14,7 @@ import io.vertx.reactivex.core.http.HttpServer;
  *
  * @author Fabien <fabien DOT lehouedec AT gmail DOT com>
  */
-public interface HttpVerticle {
+public interface HttpVerticle extends Verticle {
     /**
      * Returns an instance of a HTTP server.
      * @return a Vert.x RX HttpServer instance

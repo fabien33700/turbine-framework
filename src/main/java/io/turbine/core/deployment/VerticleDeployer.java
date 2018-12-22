@@ -1,8 +1,11 @@
 package io.turbine.core.deployment;
 
+import io.reactivex.Single;
+import io.turbine.core.configuration.Dispatcher;
 import io.turbine.core.errors.exceptions.verticles.ConfigurationException;
-import io.turbine.core.verticles.BaseVerticle;
+import io.turbine.core.verticles.behaviors.Verticle;
 import io.vertx.core.DeploymentOptions;
+import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import org.apache.commons.cli.*;
 import org.slf4j.Logger;
@@ -12,59 +15,62 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.nio.file.Paths;
-import java.util.Map;
 
-import static io.turbine.core.deployment.VerticleFactory.fromClass;
 import static io.turbine.core.utils.Utils.fromInputStream;
-import static io.vertx.core.Vertx.vertx;
-import static java.util.Objects.requireNonNull;
+import static io.turbine.core.utils.Utils.orElse;
 
 public final class VerticleDeployer {
 
+    private static VerticleDeployer instance;
+
+
+
     private static final String DEFAULT_CONFIG_PATH = "configuration.json";
 
-    private static VerticleDeployer INSTANCE = null;
+    private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    private VerticleDeployer(String[] args) {
-        requireNonNull(args, "application argument");
-        this.args = args;
-    }
+    private final Vertx vertx = Vertx.vertx();
 
-    public static VerticleDeployer getInstance() {
-        return INSTANCE;
-    }
-
-    public static VerticleDeployer getInstance(String[] args) {
-        if (INSTANCE == null) {
-            INSTANCE = new VerticleDeployer(args);
-        }
-        return INSTANCE;
-    }
-
-    protected final Logger logger = LoggerFactory.getLogger(getClass());
+    private final Dispatcher dispatcher = new Dispatcher();
 
     private final String[] args;
 
-    /*public void deployVerticles(Class<?>[] classes) {
+    static VerticleDeployer getDeployer(String[] args) {
+        if (instance == null) {
+            instance = new VerticleDeployer(args);
+        }
+        return instance;
+    }
+
+    static VerticleDeployer getDeployer() {
+        return getDeployer(new String[] {});
+    }
+
+    private VerticleDeployer(String[] args) {
+        this.args = args;
+    }
+
+    public void deployVerticles(Class<?>[] classes) {
         for (Class<?> clazz : classes)
             deployVerticle(clazz);
     }
 
     @SuppressWarnings("unchecked")
-    private BaseVerticle deployVerticle(Class<?> clazz) {
-        if (!BaseVerticle.class.isAssignableFrom(clazz)) {
+    private void deployVerticle(Class<?> clazz) {
+        if (!Verticle.class.isAssignableFrom(clazz)) {
             throw new RuntimeException("Unable to deploy verticle " + clazz.getName());
         }
 
-        return deployVerticle(fromClass((Class<BaseVerticle>) clazz));
+        logger.info("Deploying verticle {}", clazz.getName());
+
+        deployVerticle((Class<? extends Verticle>) clazz, null)
+            .doOnError(t -> logger.error("Unable to deploy verticle " + clazz.getName(), t))
+            .subscribe();
     }
 
-    public <V extends BaseVerticle> V deployVerticle(VerticleFactory<V> factory) {
-        return deployVerticle(factory, new JsonObject());
-    }
 
-    public <V extends BaseVerticle> V deployVerticle(VerticleFactory<V> factory, JsonObject parameters) {
-        logger.info("Deploying verticle {}", factory.verticleName());
+    /*public <V extends BaseVerticle> V deployVerticle(VerticleFactory<V> factory, JsonObject parameters) {
+        logger.info("Deploying verticle {}", factory.name());
 
         DeploymentOptions options = new DeploymentOptions();
         try {
@@ -87,11 +93,11 @@ public final class VerticleDeployer {
             if (parameters != null && !parameters.isEmpty()) {
                 vertx.eventBus().send("/" + deploymentID, parameters);
             }
-            logger.info("Deployed verticle {} with ID {}", factory.verticleName(), deploymentID);
+            logger.info("Deployed verticle {} with ID {}", factory.name(), deploymentID);
         });
     }*/
 
-
+/*
     @SuppressWarnings("unchecked")
     public final <V extends BaseVerticle> void deployVerticle(Class<?>... classes) {
         for (Class<?> clazz : classes) {
@@ -103,12 +109,49 @@ public final class VerticleDeployer {
 
 
     public final <V extends BaseVerticle> void deployVerticle(Class<V> verticleClass) {
-        deployVerticle(fromClass(verticleClass), new JsonObject().getMap());
+        deployVerticle(from(verticleClass), new JsonObject().getMap());
+    }*/
+
+    public final <V extends Verticle>
+    Single<V> deployVerticle(Class<V> verticleClass, JsonObject config) {
+        return deployVerticle(verticleClass::newInstance, verticleClass, config);
     }
 
-    public final <V extends BaseVerticle>
+    public final <V extends Verticle>
+    Single<V> deployVerticle(VerticleFactory<V> factory, Class<V> verticleClass, JsonObject config) {
+        config = orElse(config, new JsonObject());
+
+        try {
+            config = dispatcher.dispatch(readConfiguration(), verticleClass)
+                    .mergeIn(config);
+        } catch (ConfigurationException ex) {
+            logger.warn("Error reading configuration", ex);
+        }
+
+        DeploymentOptions options = new DeploymentOptions();
+        options.setConfig(config);
+
+        try {
+            V verticle = factory.create();
+            return Single.create(emitter ->
+                vertx.deployVerticle(() -> verticle, options, async -> {
+                    if (async.failed()) {
+                        emitter.onError(async.cause());
+                    } else {
+                        emitter.onSuccess(verticle);
+                    }
+                }
+            ));
+        } catch (Exception ex) {
+            Throwable t = new RuntimeException("Could not deploy " + verticleClass.getSimpleName()
+                    + " verticle.", ex);
+            return Single.error(t);
+        }
+    }
+
+    /*public final <V extends BaseVerticle>
     V deployVerticle(VerticleFactory<V> verticleFactory, Map<String, Object> parameters) {
-        logger.info("Deploying verticle {}", verticleFactory.verticleName());
+        logger.info("Deploying verticle {}", verticleFactory.name());
 
         DeploymentOptions options = new DeploymentOptions();
         try {
@@ -119,11 +162,29 @@ public final class VerticleDeployer {
         }
 
         V verticle = verticleFactory.get();
-        verticle.inject(parameters);
-
-        vertx().deployVerticle(() -> verticle, options);
+        vertx().deployVerticle(() -> verticle, options, (id) -> verticle.inject(parameters));
         return verticle;
-    }
+    }*/
+
+   /* public <V extends BaseVerticle>
+    Single <V> deployVerticle(VerticleFactory<V> verticleFactory, Map<String, Object> parameters) {
+        logger.info("Deploying verticle {}", verticleFactory.name());
+
+        DeploymentOptions options = new DeploymentOptions();
+        try {
+            options.setConfig(readConfiguration());
+        } catch (ConfigurationException ex) {
+            options.setConfig(new JsonObject());
+            logger.warn("Error reading configuration", ex);
+        }
+
+        Future<V> future =
+        V verticle = verticleFactory.get();
+        vertx().deployVerticle(() -> verticle, options, (id) -> verticle.inject(parameters));
+        return Single.fromFuture(future);
+    }*/
+
+
 
     private JsonObject readConfiguration() throws ConfigurationException {
         String configPath = getConfigurationPath();

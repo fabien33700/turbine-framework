@@ -1,5 +1,8 @@
 package io.turbine.core.utils;
 
+import io.reactivex.Completable;
+import io.reactivex.Single;
+import io.reactivex.functions.Action;
 import org.apache.commons.lang3.math.NumberUtils;
 
 import java.io.*;
@@ -18,6 +21,48 @@ import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Stream.of;
 
 public class Utils {
+
+    public static class Reactive {
+        public interface SingleSupplier<V> extends Supplier<Single<V>> {}
+        public interface CompletableSupplier extends Supplier<Completable> {}
+
+        public static Completable completable(Action... actions) {
+            return of(actions)
+                    .map(Completable::fromAction)
+                    .reduce(Completable::concatWith)
+                    .orElse(Completable.complete());
+        }
+
+        public static Completable completable(Completable... completables) {
+            return of(completables)
+                    .reduce(Completable::concatWith)
+                    .orElse(Completable.complete());
+        }
+
+        public static Completable completable(CompletableSupplier... completables) {
+            return of(completables)
+                    .map(Supplier::get)
+                    .filter(Objects::nonNull)
+                    .reduce(Completable::concatWith)
+                    .orElse(Completable.complete());
+        }
+
+        public static Completable completable(Single<?>... singles) {
+            return of(singles)
+                    .map(Completable::fromSingle)
+                    .reduce(Completable::concatWith)
+                    .orElse(Completable.complete());
+        }
+
+        public static Completable completable(SingleSupplier<?>... singles) {
+            return of(singles)
+                    .map(Supplier::get)
+                    .filter(Objects::nonNull)
+                    .map(Completable::fromSingle)
+                    .reduce(Completable::concatWith)
+                    .orElse(Completable.complete());
+        }
+    }
 
     public static String fromInputStream(final InputStream is) {
         if (is == null)

@@ -1,5 +1,6 @@
 package io.turbine.core.verticles;
 
+import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.reactivex.subjects.BehaviorSubject;
@@ -16,15 +17,34 @@ import io.turbine.core.verticles.support.RoomFactory;
 import io.turbine.core.ws.Message;
 import io.turbine.core.ws.WsConnection;
 import io.turbine.core.ws.impl.WsConnectionImpl;
+import io.vertx.core.http.HttpServerOptions;
+import io.vertx.core.net.JksOptions;
 import io.vertx.reactivex.core.http.HttpServer;
 import io.vertx.reactivex.core.http.ServerWebSocket;
+
+import static io.reactivex.Completable.fromSingle;
 
 // FIXME : Ladder and Room have similar behaviors (connections, messages, broadcast) but
 // Ladder is an httpserver (BaseHttpVerticle) whereas rooms are not.
 // Multiple inheritance from BaseHttpVerticle and a common class BaseWebSocketVerticle is impossible
-public abstract class BaseWebSocketLadder<S, R, B> extends BaseHttpVerticle
+// TODO : #1 Terminate implementing delegate methods for HttpVerticle
+// TODO : #2 Pull up similar behavior of Ladder and Room into a BaseWebSocketVerticle
+public abstract class BaseWebSocketLadder<S, R, B> extends BaseVerticle
         implements WebSocketLadder<S, R, B>, HttpVerticle
 {
+    class DelegateHttpVerticle extends BaseHttpVerticle {
+        @Override
+        public final Single<HttpServer> listen(int port) {
+            return httpServer()
+                    .websocketHandler(BaseWebSocketLadder.this::handleWebSocket)
+                    .rxListen(port);
+        }
+
+        // TODO Overload logger name
+    }
+
+    private HttpVerticle http;
+
     private final ReactiveMap<R, WebSocketRoom<S, R, B>> rooms = new ReactiveMapImpl<>();
 
     protected final ReactiveList<WsConnection<S>> connections = new ReactiveListImpl<>();
@@ -32,12 +52,13 @@ public abstract class BaseWebSocketLadder<S, R, B> extends BaseHttpVerticle
     // Messages here will be send to everyone, use with caution !
     private final Observable<Message<S,B>> messages = BehaviorSubject.create();
 
-    @Override
-    public final Single<HttpServer> listen(int port) {
-        return httpServer()
-            .websocketHandler(this::handleWebSocket)
-            .rxListen(port);
-    }
+   /* @Override
+    public void init(Vertx vertx, Context context) {
+        super.init(vertx, context);
+        VerticleFactory<HttpVerticle> factory = from(DelegateHttpVerticle::new);
+        deployVerticle(factory, config()).subscribe(http -> this.http = http);
+        //http.init(vertx, context);
+    }*/
 
     private void handleWebSocket(ServerWebSocket ws) {
         try {
@@ -66,12 +87,16 @@ public abstract class BaseWebSocketLadder<S, R, B> extends BaseHttpVerticle
 
         try {
             R roomId = getRoomIdentifier(ws);
-
             WebSocketRoom<S, R, B> room;
+
             if (rooms.containsKey(roomId)) {
                 room = rooms.get(roomId);
             } else {
-                room = createWebSocketRoom(roomId);
+                room = roomFactory().apply(this, roomId);
+                register(
+                        room.disconnections().subscribe(connections::remove),
+                        room.rxStart().subscribe(() -> rooms.put(roomId, room))
+                );
             }
             room.connect(conn);
         } catch (Exception ex) {
@@ -81,13 +106,14 @@ public abstract class BaseWebSocketLadder<S, R, B> extends BaseHttpVerticle
         }
     }
 
-    private WebSocketRoom<S, R, B> createWebSocketRoom(R roomId) throws Exception {
-        WebSocketRoom<S, R, B> room = roomFactory().apply(this, roomId);
-        register(
-            room.disconnections().subscribe(connections::remove),
-            room.rxStart().subscribe(() -> rooms.put(roomId, room))
-        );
-        return room;
+    @Override
+    public Completable rxStart() {
+        return super.rxStart().concatWith(
+            fromSingle(
+                deployVerticle(
+                        DelegateHttpVerticle::new,
+                        DelegateHttpVerticle.class, config())
+            ));
     }
 
     protected boolean accepts(ServerWebSocket ws) {
@@ -131,5 +157,44 @@ public abstract class BaseWebSocketLadder<S, R, B> extends BaseHttpVerticle
     public Observable<WsConnection<S>> disconnections() {
         return connections.getObserver().deletions()
                 .map(ListEvent::first);
+    }
+
+    @Override
+    public Single<HttpServer> listen(int port) {
+        return http.listen(port);
+    }
+
+    /* ********************************* *
+     * Delegate method for HttpVerticle  *
+     * ********************************* */
+
+    @Override
+    public boolean useSsl() {
+        return http.useSsl();
+    }
+
+    @Override
+    public int port() {
+        return http.port();
+    }
+
+    @Override
+    public HttpServer httpServer() {
+        return http.httpServer();
+    }
+
+    @Override
+    public HttpServerOptions httpServerOptions() {
+        return http.httpServerOptions();
+    }
+
+    @Override
+    public JksOptions jksOptions() {
+        return http.jksOptions();
+    }
+
+    @Override
+    public Single<HttpServer> listen() {
+        return http.listen();
     }
 }

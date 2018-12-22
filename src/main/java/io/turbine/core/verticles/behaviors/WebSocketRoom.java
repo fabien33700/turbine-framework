@@ -1,10 +1,9 @@
 package io.turbine.core.verticles.behaviors;
 
 import io.reactivex.Completable;
-import io.turbine.core.verticles.support.Startable;
 import io.turbine.core.ws.WsConnection;
 
-public interface WebSocketRoom<S, R, B> extends WebSocketVerticle<S, B>, Startable {
+public interface WebSocketRoom<S, R, B> extends WebSocketVerticle<S, B> {
     Completable endOfLifeSignal();
 
     WebSocketLadder<S, R, B> getLadder();

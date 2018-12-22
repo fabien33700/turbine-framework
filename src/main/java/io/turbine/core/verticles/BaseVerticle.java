@@ -1,14 +1,13 @@
 package io.turbine.core.verticles;
 
 import io.reactivex.Completable;
+import io.reactivex.Single;
 import io.reactivex.disposables.Disposable;
-import io.turbine.core.configuration.Dispatcher;
 import io.turbine.core.configuration.Reader;
+import io.turbine.core.deployment.Turbine;
 import io.turbine.core.deployment.VerticleDeployer;
 import io.turbine.core.deployment.VerticleFactory;
-import io.turbine.core.utils.Composite;
 import io.turbine.core.verticles.behaviors.Verticle;
-import io.turbine.core.verticles.support.Parameter;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
@@ -17,14 +16,13 @@ import io.vertx.reactivex.core.AbstractVerticle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.Field;
-import java.util.*;
-import java.util.function.Supplier;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Optional;
 
-import static io.reactivex.Completable.complete;
 import static io.reactivex.Completable.fromAction;
-import static io.turbine.core.deployment.VerticleFactory.fromClass;
-import static io.turbine.core.deployment.VerticleFactory.fromSupplier;
+import static io.turbine.core.utils.Utils.Reactive.completable;
 import static java.util.Arrays.asList;
 import static java.util.Collections.unmodifiableList;
 import static java.util.Optional.ofNullable;
@@ -40,7 +38,7 @@ import static java.util.Optional.ofNullable;
  * @see AbstractVerticle
  * @author Fabien <fabien DOT lehouedec AT gmail DOT com>
  */
-public abstract class BaseVerticle extends AbstractVerticle implements Verticle, Composite<BaseVerticle> {
+public abstract class BaseVerticle extends AbstractVerticle implements Verticle {
 
     /**
      * The verticle logger instance
@@ -60,12 +58,14 @@ public abstract class BaseVerticle extends AbstractVerticle implements Verticle,
     /**
      * A list of children verticles deployed by the current verticle
      */
-    private final List<BaseVerticle> children = new ArrayList<>();
+    private final List<Verticle> children = new ArrayList<>();
 
     /**
      * A reference to the parent verticle
      */
-    private BaseVerticle parent;
+    private Verticle parent;
+
+    private JsonObject config;
 
     /**
      * Initialize the Verticle, called by Vert.x
@@ -76,13 +76,14 @@ public abstract class BaseVerticle extends AbstractVerticle implements Verticle,
     @Override
     public void init(Vertx vertx, Context context) {
         super.init(vertx, context);
+
         reader = new Reader(config());
     }
 
-    @Override
+    /*@Override
     public final JsonObject config() {
-        return Dispatcher.getInstance().dispatch(super.config(), getClass());
-    }
+        return config;
+    }*/
 
     /**
      * A method to register a Disposable into verticle subscriptions.
@@ -123,15 +124,15 @@ public abstract class BaseVerticle extends AbstractVerticle implements Verticle,
         return reader.read(path);
     }
 
-    private Completable getVerticlesChildrenCompletables() {
+    private Completable allSubVerticlesStop() {
         return children.stream()
-                .map(BaseVerticle::rxStop)
+                .map(Verticle::rxStop)
                 .reduce(Completable::concatWith)
                 .orElse(Completable.complete());
     }
 
     protected final VerticleDeployer deployer() {
-        return VerticleDeployer.getInstance();
+        return Turbine.getDeployer();
     }
 
     @Override
@@ -144,82 +145,91 @@ public abstract class BaseVerticle extends AbstractVerticle implements Verticle,
         rxStop().subscribe(stopFuture::complete, stopFuture::fail);
     }
 
+
     @Override
     public Completable rxStart() {
-        return complete();
+        return fromAction(() -> logger.debug("Verticle is starting ..."));
     }
+
 
     @Override
     public Completable rxStop() {
-        return getVerticlesChildrenCompletables().concatWith(
-                fromAction(() -> subscriptions.forEach(Disposable::dispose)) );
+        return allSubVerticlesStop().concatWith(completable(
+            () -> logger.debug("Verticle is starting ..."),
+            () -> subscriptions.forEach(Disposable::dispose)
+        ));
     }
 
-    @Override
-    public final void inject(Map<String, Object> parameters) {
-        for (Field field : getClass().getDeclaredFields()) {
-            if (parameters.containsKey(field.getName()) &&
-                    field.isAnnotationPresent(Parameter.class)) {
-                final String name = field.getName();
-                try {
-                    field.setAccessible(true);
-                    if (field.getType().equals(Integer.class)) {
-                        field.setInt(this, (int) parameters.get(name));
-                    } else if (field.getType().equals(Boolean.class)) {
-                        field.setBoolean(this, (boolean) parameters.get(name));
-                    } else if (field.getType().equals(Long.class)) {
-                        field.setLong(this, (long) parameters.get(name));
-                    } else if (field.getType().equals(Float.class)) {
-                        field.setFloat(this, (float) parameters.get(name));
-                    } else if (field.getType().equals(Double.class)) {
-                        field.setDouble(this, (double) parameters.get(name));
-                    } else if (field.getType().equals(String.class)) {
-                        field.set(this, parameters.get(name));
-                    }
-                } catch (ClassCastException | ReflectiveOperationException ex) {
-                    throw new RuntimeException("Cannot set parameter " + name, ex);
-                } finally {
-                    field.setAccessible(false);
-                }
-            }
-        }
+   /* @Override
+    public final void inject(final Map<String, Object> config) {
+        requireNonNull(config, "config");
+        inject(new JsonObject(config));
     }
 
-    public final <V extends BaseVerticle>
+    public final void inject(final JsonObject config) {
+        requireNonNull(config, "config");
+        this.config = config.mergeIn(this.config);
+    }*/
+
+   /* public final <V extends BaseVerticle>
     V deployVerticle(Class<V> verticleClass, Map<String, Object> parameters) {
-        return deployVerticle(fromClass(verticleClass), parameters);
+        return deployVerticle(from(verticleClass), parameters);
     }
 
     public final <V extends BaseVerticle>
     V deployVerticle(Supplier<V> verticleSupplier, Map<String, Object> parameters) {
         return deployVerticle(fromSupplier(verticleSupplier), parameters);
+    }*/
+
+    @Override
+    public <V extends Verticle>
+    Single<V> deployVerticle(Class<V> verticleClass, JsonObject config) {
+        return deployer().deployVerticle(verticleClass, config)
+                .map(this::addChild)
+                .doOnError(t -> logger.error("Deployment of {} has failed.", verticleClass.getName()));
     }
 
-    private <V extends BaseVerticle>
-    V deployVerticle(VerticleFactory<V> verticleFactory, Map<String, Object> parameters) {
-        V verticle = deployer().deployVerticle(verticleFactory, parameters);
+    @Override
+    public <V extends Verticle>
+    Single<V> deployVerticle(VerticleFactory<V> factory, Class<V> verticleClass, JsonObject config) {
+        return deployer().deployVerticle(factory, verticleClass, config)
+            .map(this::addChild)
+            .doOnError(t -> logger.error("Deployment of {} has failed.", verticleClass.getName()));
+    }
 
-        if (verticle == null) {
-            throw new RuntimeException("Deployment of " + verticleFactory.verticleName() + " had failed.");
-        }
-
+    private <V extends Verticle> V addChild(V verticle) {
         verticle.setParent(this);
         children.add(verticle);
 
         return verticle;
     }
 
-    public void setParent(BaseVerticle verticle) {
+    /*private <V extends BaseVerticle>
+    V deployVerticle(VerticleFactory<V> verticleFactory, Map<String, Object> parameters) {
+        V verticle = deployer().deployVerticle(verticleFactory, parameters);
+
+        if (verticle == null) {
+            throw new RuntimeException("Deployment of " + verticleFactory.name() + " had failed.");
+        }
+
+        verticle.setParent(this);
+        children.add(verticle);
+
+        return verticle;
+    }*/
+
+    @Override
+    public void setParent(Verticle verticle) {
         this.parent = verticle;
     }
 
     @Override
-    public List<BaseVerticle> getChildren() {
+    public List<Verticle> getChildren() {
         return unmodifiableList(children);
     }
 
     @Override
-    public Optional<BaseVerticle> getParent() {
+    public Optional<Verticle> getParent() {
         return ofNullable(parent);
     }
 }

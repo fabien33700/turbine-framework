@@ -9,6 +9,8 @@ public interface Composite<T extends Composite<T>> {
 
     Optional<T> getParent();
 
+    void setParent(T parent);
+
     default boolean hasParent() {
         return getParent().isPresent();
     }

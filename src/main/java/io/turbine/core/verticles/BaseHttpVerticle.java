@@ -89,6 +89,7 @@ public abstract class BaseHttpVerticle extends BaseVerticle implements HttpVerti
      */
     @Override
     public Single<HttpServer> listen(int port) {
+        logger.info("Server listening at {}", port);
         return httpServer().rxListen(port);
     }
 

@@ -16,7 +16,7 @@ import io.turbine.core.ws.WsConnection;
  *
  * @author Fabien <fabien DOT lehouedec AT gmail DOT com>
  */
-public interface WebSocketVerticle<S, B>  {
+public interface WebSocketVerticle<S, B> extends Verticle  {
 
     void broadcast(Message<S, B> message);
 
