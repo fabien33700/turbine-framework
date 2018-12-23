@@ -1,13 +1,13 @@
 package io.turbine.core.errors.exceptions.http;
 
-import io.turbine.core.json.JsonBuilder;
+import io.turbine.core.json.JsonFormat;
 import io.turbine.core.json.JsonSerializable;
 import io.vertx.core.json.JsonObject;
 
 import java.time.Instant;
 
 import static io.netty.handler.codec.http.HttpResponseStatus.valueOf;
-import static io.turbine.core.json.JsonBuilder.create;
+import static io.turbine.core.json.JsonFormat.Builder.create;
 import static io.turbine.core.utils.Utils.orElse;
 
 /**
@@ -77,7 +77,7 @@ public abstract class HttpException extends RuntimeException implements JsonSeri
 
     @Override
     public JsonObject toJson() {
-        JsonBuilder builder = create()
+        JsonFormat.Builder builder = create()
                 .put("message", getMessage())
                 .put("type", getClass().getSimpleName())
                 .put("instant", getInstant())

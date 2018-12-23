@@ -1,6 +1,6 @@
 package io.turbine.core.ws.impl;
 
-import io.turbine.core.json.JsonBuilder;
+import io.turbine.core.json.JsonFormat;
 import io.turbine.core.ws.Message;
 import io.turbine.core.ws.WsConnection;
 import io.vertx.core.json.JsonObject;
@@ -36,7 +36,7 @@ public final class MessageImpl<S, B> implements Message<S, B> {
 
     @Override
     public JsonObject toJson() {
-        return JsonBuilder.json(
+        return JsonFormat.Builder.json(
             new String[] { "sender", "sentAt", "body" },
             new Object[] { sender(), sentAt(), body() }
         );

@@ -24,28 +24,6 @@ import static java.util.stream.Collectors.toSet;
 public class Dispatcher {
 
     /**
-     * The dispatcher instance.
-     * TODO: We use singleton for the moment, going to use DI in future (creation of a Dispatcher interface)
-     */
-    private static Dispatcher instance = null;
-
-    /**
-     * Private constructor to prevent instanciation from outside (Singleton).
-     */
-    private Dispatcher() {}
-
-    /**
-     * Get the instance of the Dispatcher, creating it before if it isn't.
-     * @return The dispatcher instance
-     */
-    public static Dispatcher getInstance() {
-        if (instance == null) {
-            instance = new Dispatcher();
-        }
-        return instance;
-    }
-
-    /**
      * Dispatch the right configuration fragment.
      * @param baseConfig The base configuration JsonObject, usually provide by the Verticle launcher, or Vert.x
      * @param clazz The class to supply the configuration

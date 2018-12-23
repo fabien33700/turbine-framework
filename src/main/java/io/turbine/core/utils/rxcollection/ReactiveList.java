@@ -1,5 +1,7 @@
 package io.turbine.core.utils.rxcollection;
 
+import io.turbine.core.utils.rxcollection.observers.ReactiveListObserver;
+
 import java.util.List;
 
 /**
@@ -8,7 +10,7 @@ import java.util.List;
  * These events are observables to allow developers to subscribe to list changes:
  * they are supplied by a list observer.
  *
- * Note that a ReactiveList is itself a ReactiveListObserver, and supply also a getObserver()
+ * Note that a ReactiveList is itself a ReactiveListObserver, and supplies also a getObserver()
  * getter method to allow to interact with it without manipulating directly the list.
  *
  * @param <T> The type of items contained in the list

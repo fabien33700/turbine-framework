@@ -1,5 +1,8 @@
 package io.turbine.core.utils;
 
+import io.reactivex.Completable;
+import io.reactivex.Single;
+import io.reactivex.functions.Action;
 import org.apache.commons.lang3.math.NumberUtils;
 
 import java.io.*;
@@ -17,7 +20,59 @@ import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Stream.of;
 
+/**
+ * The utility helper master class.
+ * It contains at top-level all the general-purpose methods and also
+ * static nested classes for each specialized domain.
+ *
+ * @author Fabien <fabien DOT lehouedec AT gmail DOT com>
+ */
 public class Utils {
+
+    /**
+     * An utility helper class for Rx-Java 2
+     */
+    public static class Reactive {
+        public interface SingleSupplier<V> extends Supplier<Single<V>> {}
+        public interface CompletableSupplier extends Supplier<Completable> {}
+
+        public static Completable completable(Action... actions) {
+            return of(actions)
+                    .map(Completable::fromAction)
+                    .reduce(Completable::concatWith)
+                    .orElse(Completable.complete());
+        }
+
+        public static Completable completable(Completable... completables) {
+            return of(completables)
+                    .reduce(Completable::concatWith)
+                    .orElse(Completable.complete());
+        }
+
+        public static Completable completable(CompletableSupplier... completables) {
+            return of(completables)
+                    .map(Supplier::get)
+                    .filter(Objects::nonNull)
+                    .reduce(Completable::concatWith)
+                    .orElse(Completable.complete());
+        }
+
+        public static Completable completable(Single<?>... singles) {
+            return of(singles)
+                    .map(Completable::fromSingle)
+                    .reduce(Completable::concatWith)
+                    .orElse(Completable.complete());
+        }
+
+        public static Completable completable(SingleSupplier<?>... singles) {
+            return of(singles)
+                    .map(Supplier::get)
+                    .filter(Objects::nonNull)
+                    .map(Completable::fromSingle)
+                    .reduce(Completable::concatWith)
+                    .orElse(Completable.complete());
+        }
+    }
 
     public static String fromInputStream(final InputStream is) {
         if (is == null)
@@ -102,6 +157,9 @@ public class Utils {
             public V value() {
                 return value;
             }
+        }
+        public static <K, V> Map<K, V> mapOf(K key, V value) {
+            return mapOf(tuple(key, value));
         }
         @SafeVarargs
         public static <K, V> Map<K, V> mapOf(Tuple<K, V> ... tuples) {
@@ -225,8 +283,6 @@ public class Utils {
     }
 
     public static class Web {
-
-
         /**
          * Parse a query string from a HTTP GET request and returns
          * a map containing all parameters from it.

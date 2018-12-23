@@ -2,7 +2,8 @@ package io.turbine.core.utils.rxcollection;
 
 import io.reactivex.Observable;
 import io.reactivex.disposables.Disposable;
-import io.turbine.core.utils.rxcollection.events.Event;
+import io.turbine.core.utils.rxcollection.events.ListEvent;
+import io.turbine.core.utils.rxcollection.impl.ReactiveListImpl;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -44,9 +45,9 @@ class ReactiveListImplTest {
         subscriptions.forEach(Disposable::dispose);
     }
 
-    private <T> AtomicReference<Event<T>>
-    captureEvent(Observable<Event<T>> eventSource) {
-        AtomicReference<Event<T>> eventAtomicReference = new AtomicReference<>();
+    private <T> AtomicReference<ListEvent<T>>
+    captureEvent(Observable<ListEvent<T>> eventSource) {
+        AtomicReference<ListEvent<T>> eventAtomicReference = new AtomicReference<>();
         register(eventSource
                 .doOnNext(eventAtomicReference::set)
                 .subscribe()
@@ -57,9 +58,9 @@ class ReactiveListImplTest {
     @Test
     void testAdd() {
         // Sansa, Robb, Arya, Jon, Rickon, Bran, Ned
-        AtomicReference<Event<String>> ref = captureEvent(list.additions());
+        AtomicReference<ListEvent<String>> ref = captureEvent(list.additions());
         list.add("Catelyn");
-        final Event<String> evt = ref.get();
+        final ListEvent<String> evt = ref.get();
 
         assertThat(evt.items(), contains("Catelyn"));
         assertThat(evt.position(), is(8));
@@ -70,9 +71,9 @@ class ReactiveListImplTest {
     @Test
     void testAddAll() {
         // Sansa, Robb, Arya, Jon, Rickon, Bran, Ned
-        AtomicReference<Event<String>> ref = captureEvent(list.additions());
+        AtomicReference<ListEvent<String>> ref = captureEvent(list.additions());
         list.addAll(asList("Jaime", "Tirion", "Myrcella"));
-        final Event<String> evt = ref.get();
+        final ListEvent<String> evt = ref.get();
 
         assertThat(evt.items(), contains("Jaime", "Tirion", "Myrcella"));
         assertThat(evt.affected(), is(3));
@@ -85,9 +86,9 @@ class ReactiveListImplTest {
     @Test
     void testAddAllWithIndex() {
         // Sansa, Robb, Arya, Jon, Rickon, Bran, Ned
-        AtomicReference<Event<String>> ref = captureEvent(list.additions());
+        AtomicReference<ListEvent<String>> ref = captureEvent(list.additions());
         list.addAll(4, asList("Jaime", "Tirion", "Myrcella"));
-        final Event<String> evt = ref.get();
+        final ListEvent<String> evt = ref.get();
 
         assertThat(evt.items(), contains("Jaime", "Tirion", "Myrcella"));
         assertThat(evt.affected(), is(3));
@@ -101,10 +102,10 @@ class ReactiveListImplTest {
     @Test
     void testRemove() {
         // Sansa, Robb, Arya, Jon, Rickon, Bran, Ned
-        AtomicReference<Event<String>> ref = captureEvent(list.deletions());
+        AtomicReference<ListEvent<String>> ref = captureEvent(list.deletions());
         // Say goodbye to Ned ;)
         list.remove("Ned");
-        final Event<String> evt = ref.get();
+        final ListEvent<String> evt = ref.get();
 
         assertThat(evt.items(), contains("Ned"));
         assertThat(evt.affected(), is(1));
@@ -116,10 +117,10 @@ class ReactiveListImplTest {
     @Test
     void testRemoveAll() {
         // Sansa, Robb, Arya, Jon, Rickon, Bran, Ned
-        AtomicReference<Event<String>> ref = captureEvent(list.deletions());
+        AtomicReference<ListEvent<String>> ref = captureEvent(list.deletions());
         // Say goodbye to mens x(
         list.removeAll(asList("Robb", "Jon", "Rickon", "Bran", "Ned"));
-        final Event<String> evt = ref.get();
+        final ListEvent<String> evt = ref.get();
 
         assertThat(evt.items(), contains("Robb", "Jon", "Rickon", "Bran", "Ned"));
         assertThat(evt.affected(), is(5));
@@ -132,10 +133,10 @@ class ReactiveListImplTest {
     @Test
     void testRetainAll() {
         // Sansa, Robb, Arya, Jon, Rickon, Bran, Ned
-        AtomicReference<Event<String>> ref = captureEvent(list.deletions());
+        AtomicReference<ListEvent<String>> ref = captureEvent(list.deletions());
         // Girls rules !
         list.retainAll(asList("Sansa", "Arya"));
-        final Event<String> evt = ref.get();
+        final ListEvent<String> evt = ref.get();
 
         assertThat(evt.items(), contains("Robb", "Jon", "Rickon", "Bran", "Ned"));
         assertThat(evt.affected(), is(5));
@@ -148,10 +149,10 @@ class ReactiveListImplTest {
     @Test
     void testClear() {
         // Sansa, Robb, Arya, Jon, Rickon, Bran, Ned
-        AtomicReference<Event<String>> ref = captureEvent(list.deletions());
+        AtomicReference<ListEvent<String>> ref = captureEvent(list.deletions());
         // Valar morghulis !
         list.clear();
-        final Event<String> evt = ref.get();
+        final ListEvent<String> evt = ref.get();
 
         assertThat(evt.items(), contains("Sansa", "Robb", "Arya", "Jon", "Rickon", "Bran", "Ned"));
         assertThat(evt.affected(), is(7));
@@ -173,10 +174,10 @@ class ReactiveListImplTest {
     @Test
     void testSet() {
         // Sansa, Robb, Arya, Jon, Rickon, Bran, Ned
-        AtomicReference<Event<String>> ref = captureEvent(list.modifications());
+        AtomicReference<ListEvent<String>> ref = captureEvent(list.modifications());
 
         list.set(6, "Catelyn");
-        final Event<String> evt = ref.get();
+        final ListEvent<String> evt = ref.get();
 
         assertThat(evt.items(), contains("Catelyn"));
         assertThat(evt.affected(), is(1));
@@ -191,9 +192,9 @@ class ReactiveListImplTest {
     @Test
     void testAddWithIndex() {
         // Sansa, Robb, Arya, Jon, Rickon, Bran, Ned
-        AtomicReference<Event<String>> ref = captureEvent(list.additions());
+        AtomicReference<ListEvent<String>> ref = captureEvent(list.additions());
         list.add(5, "Catelyn");
-        final Event<String> evt = ref.get();
+        final ListEvent<String> evt = ref.get();
 
         assertThat(evt.items(), contains("Catelyn"));
         assertThat(evt.position(), is(5));
@@ -208,10 +209,10 @@ class ReactiveListImplTest {
     @Test
     void testRemoveWithIndex() {
         // Sansa, Robb, Arya, Jon, Rickon, Bran, Ned
-        AtomicReference<Event<String>> ref = captureEvent(list.deletions());
+        AtomicReference<ListEvent<String>> ref = captureEvent(list.deletions());
 
         list.remove(1); // Bye Robb
-        final Event<String> evt = ref.get();
+        final ListEvent<String> evt = ref.get();
 
         assertThat(evt.items(), contains("Robb"));
         assertThat(evt.position(), is(1));
