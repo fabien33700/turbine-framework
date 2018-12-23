@@ -1,6 +1,7 @@
 package io.turbine.core.verticles.behaviors;
 
 import io.reactivex.Completable;
+import io.turbine.core.errors.exceptions.ws.WebSocketException;
 import io.turbine.core.ws.WsConnection;
 
 /**
@@ -34,7 +35,7 @@ public interface WebSocketRoom<S, R, B> extends WebSocketVerticle<S, B> {
      * Sends the WebSocket connections to the room.
      * @param connection The WS client connection
      */
-    void connect(WsConnection<S> connection);
+    void connect(WsConnection<S> connection) throws WebSocketException;
 
     /**
      * Set the capacity of the room, which means the maximum

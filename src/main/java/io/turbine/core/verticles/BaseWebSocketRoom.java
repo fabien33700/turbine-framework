@@ -2,13 +2,10 @@ package io.turbine.core.verticles;
 
 import io.reactivex.Completable;
 import io.reactivex.Observable;
+import io.turbine.core.errors.exceptions.ws.WebSocketException;
 import io.turbine.core.json.JsonFormat;
-import io.turbine.core.utils.rxcollection.ReactiveList;
-import io.turbine.core.utils.rxcollection.events.ListEvent;
-import io.turbine.core.utils.rxcollection.impl.ReactiveListImpl;
 import io.turbine.core.verticles.behaviors.WebSocketLadder;
 import io.turbine.core.verticles.behaviors.WebSocketRoom;
-import io.turbine.core.ws.Message;
 import io.turbine.core.ws.WsConnection;
 import io.turbine.core.ws.impl.MessageImpl;
 import io.vertx.core.json.JsonObject;
@@ -18,19 +15,18 @@ import java.util.concurrent.TimeUnit;
 import static java.util.Objects.requireNonNull;
 
 public abstract class BaseWebSocketRoom<S, R, B>
-        extends BaseVerticle implements WebSocketRoom<S, R, B> {
+        extends BaseWebSocketVerticle<S, R, B> implements WebSocketRoom<S, R, B> {
 
     private static final long EMPTY_BEFORE_END = 5;
 
     protected final WebSocketLadder<S, R, B> ladder;
-
-    protected final ReactiveList<WsConnection<S>> connections = new ReactiveListImpl<>();
 
     private final R roomIdentifier;
 
     private long capacity = -1;
 
     protected BaseWebSocketRoom(WebSocketLadder<S, R, B> ladder, R roomIdentifier) {
+        super();
         requireNonNull(roomIdentifier, "room's identifier");
         this.ladder = ladder;
         this.roomIdentifier = roomIdentifier;
@@ -51,7 +47,10 @@ public abstract class BaseWebSocketRoom<S, R, B>
     protected abstract B parseMessage(final JsonObject source);
 
     @Override
-    public void connect(WsConnection<S> connection) {
+    public void connect(WsConnection<S> connection) throws WebSocketException {
+        if (capacity > 0 && occupation() >= capacity) {
+            throw new WebSocketException("The room " + roomIdentifier + " is full.");
+        }
         connections.add(connection);
     }
 
@@ -90,26 +89,4 @@ public abstract class BaseWebSocketRoom<S, R, B>
     public R identifier() {
         return roomIdentifier;
     }
-
-    @Override
-    public void broadcast(final Message<S, B> message) {
-        connections.forEach(
-            conn -> conn.webSocket().writeTextMessage(
-                    message.toJsonString()
-            ));
-    }
-
-    @Override
-    public Observable<WsConnection<S>> connections() {
-        return connections.getObserver().additions()
-                .map(ListEvent::first);
-    }
-
-    @Override
-    public Observable<WsConnection<S>> disconnections() {
-        return connections.getObserver().deletions()
-                .map(ListEvent::first);
-    }
-
-
 }
