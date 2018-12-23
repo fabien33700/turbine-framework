@@ -99,7 +99,7 @@ public class ReactiveMapImpl<K, V> implements ReactiveMap<K, V> {
 
     @Override
     public ReactiveMapObserver<K, V> getObserver() {
-        return null;
+        return observer;
     }
 
     @Override
@@ -131,9 +131,9 @@ public class ReactiveMapImpl<K, V> implements ReactiveMap<K, V> {
     public V put(K key, V value) {
         V previous = delegate.put(key, value);
         if (previous == null) {
-            newAdditionMapEvent(this, key, value);
+            events.onNext(newAdditionMapEvent(this, key, value));
         } else {
-            newModificationMapEvent(this, key, value);
+            events.onNext(newModificationMapEvent(this, key, value));
         }
 
         return previous;
@@ -144,7 +144,7 @@ public class ReactiveMapImpl<K, V> implements ReactiveMap<K, V> {
     public V remove(Object key) {
         V previous = delegate.remove(key);
         if (previous != null) {
-            newDeletionMapEvent(this, (K) key, previous);
+            events.onNext(newDeletionMapEvent(this, (K) key, previous));
         }
         return previous;
     }
@@ -152,12 +152,12 @@ public class ReactiveMapImpl<K, V> implements ReactiveMap<K, V> {
     @Override
     public void putAll(Map<? extends K, ? extends V> m) {
         delegate.putAll(m);
-        newAdditionMapEvent(this, m);
+        events.onNext(newAdditionMapEvent(this, m));
     }
 
     @Override
     public void clear() {
-        newDeletionMapEvent(this, this);
+        events.onNext(newDeletionMapEvent(this, this));
         delegate.clear();
     }
 
@@ -199,7 +199,7 @@ public class ReactiveMapImpl<K, V> implements ReactiveMap<K, V> {
             }
         }
         if (!updates.isEmpty()) {
-            newModificationMapEvent(this, updates);
+            events.onNext(newModificationMapEvent(this, updates));
         }
     }
 }

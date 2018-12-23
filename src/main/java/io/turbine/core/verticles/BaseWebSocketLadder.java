@@ -13,8 +13,8 @@ import io.turbine.core.utils.rxcollection.observers.ReactiveMapObserver;
 import io.turbine.core.verticles.behaviors.HttpVerticle;
 import io.turbine.core.verticles.behaviors.WebSocketLadder;
 import io.turbine.core.verticles.behaviors.WebSocketRoom;
-import io.turbine.core.verticles.support.RoomFactory;
 import io.turbine.core.ws.Message;
+import io.turbine.core.ws.RoomFactory;
 import io.turbine.core.ws.WsConnection;
 import io.turbine.core.ws.impl.WsConnectionImpl;
 import io.vertx.core.http.HttpServerOptions;
@@ -27,7 +27,6 @@ import static io.reactivex.Completable.fromSingle;
 // FIXME : Ladder and Room have similar behaviors (connections, messages, broadcast) but
 // Ladder is an httpserver (BaseHttpVerticle) whereas rooms are not.
 // Multiple inheritance from BaseHttpVerticle and a common class BaseWebSocketVerticle is impossible
-// TODO : #1 Terminate implementing delegate methods for HttpVerticle
 // TODO : #2 Pull up similar behavior of Ladder and Room into a BaseWebSocketVerticle
 public abstract class BaseWebSocketLadder<S, R, B> extends BaseVerticle
         implements WebSocketLadder<S, R, B>, HttpVerticle
@@ -49,16 +48,8 @@ public abstract class BaseWebSocketLadder<S, R, B> extends BaseVerticle
 
     protected final ReactiveList<WsConnection<S>> connections = new ReactiveListImpl<>();
 
-    // Messages here will be send to everyone, use with caution !
+    // FIXME Messages here will be send to everyone, use with caution !
     private final Observable<Message<S,B>> messages = BehaviorSubject.create();
-
-   /* @Override
-    public void init(Vertx vertx, Context context) {
-        super.init(vertx, context);
-        VerticleFactory<HttpVerticle> factory = from(DelegateHttpVerticle::new);
-        deployVerticle(factory, config()).subscribe(http -> this.http = http);
-        //http.init(vertx, context);
-    }*/
 
     private void handleWebSocket(ServerWebSocket ws) {
         try {

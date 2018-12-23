@@ -10,17 +10,21 @@ import java.util.Map;
  */
 public interface MapEvent<K, V> {
     /**
-     * A sequence of the items affected by a previous operation.
-     * @return A Iterable instance of T items
+     * A sequence of the keys affected by a previous operation.
+     * @return A Iterable instance of K keys
      */
     Iterable<K> keys();
 
     /**
-     *
-     * @return
+     * A sequence of the values affected by a previous operation.
+     * @return A Iterable instance of V values
      */
     Iterable<V> values();
 
+    /**
+     * A sequence of the map entries affected by a previous operation.
+     * @return A Iterable instance of K, V Map's entry
+     */
     Iterable<Map.Entry<? extends K, ? extends V>> entries();
 
     /**
@@ -43,10 +47,14 @@ public interface MapEvent<K, V> {
     EventType eventType();
 
     /**
-     * An utility method to get the first affected item.
-     * @return The first affected T item
+     * An utility method to get the first affected key.
+     * @return The first affected K key
      */
     K firstKey();
 
+    /**
+     * An utility method to get the first affected value.
+     * @return The first affected V value
+     */
     V firstValue();
 }

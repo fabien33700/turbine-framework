@@ -20,8 +20,18 @@ import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Stream.of;
 
+/**
+ * The utility helper master class.
+ * It contains at top-level all the general-purpose methods and also
+ * static nested classes for each specialized domain.
+ *
+ * @author Fabien <fabien DOT lehouedec AT gmail DOT com>
+ */
 public class Utils {
 
+    /**
+     * An utility helper class for Rx-Java 2
+     */
     public static class Reactive {
         public interface SingleSupplier<V> extends Supplier<Single<V>> {}
         public interface CompletableSupplier extends Supplier<Completable> {}
@@ -273,8 +283,6 @@ public class Utils {
     }
 
     public static class Web {
-
-
         /**
          * Parse a query string from a HTTP GET request and returns
          * a map containing all parameters from it.

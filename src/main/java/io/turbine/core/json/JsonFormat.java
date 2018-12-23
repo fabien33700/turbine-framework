@@ -5,14 +5,18 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 import java.time.Instant;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collector;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import static io.turbine.core.utils.Utils.Dates.formatDateIso3601;
 import static io.turbine.core.utils.Utils.Reflection.isPrimitiveOrWrapper;
+import static java.util.Arrays.asList;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collector.of;
 
@@ -76,4 +80,106 @@ public final class JsonFormat {
         return Stream.of(objects).collect(JSON_ARRAY_COLLECTOR);
     }
 
+    @SuppressWarnings("unchecked")
+    public static JsonObject fromString(String json) {
+        Map<String, Object> map = (Map<String, Object>) Json.decodeValue(json, Map.class);
+        return new JsonObject(map);
+    }
+
+    public static final class Builder {
+
+        public static Builder create() {
+            return new Builder();
+        }
+
+        public static Builder from(JsonObject json) {
+            return new Builder(json);
+        }
+
+        private final JsonObject json;
+
+        private Builder() {
+            json = new JsonObject();
+        }
+
+        private Builder(JsonObject json) {
+            this.json = json;
+        }
+
+        public <K, V> Builder put(K key, V value) {
+            json.put(key.toString(), value);
+            return this;
+        }
+
+        public <K, V> Builder put(Iterable<K> keys, Iterable<V> values) {
+            Iterator<K> itKeys = keys.iterator();
+            Iterator<V> itValues = values.iterator();
+
+            while (itKeys.hasNext() && itValues.hasNext())
+                json.put(itKeys.next().toString(), itValues.next().toString());
+
+            return this;
+        }
+
+        public <K, V> Builder put(Iterable<K> keys, Function<K, V> valueFn) {
+            StreamSupport.stream(keys.spliterator(), false)
+                .forEachOrdered(key -> json.put(key.toString(), valueFn.apply(key).toString()));
+
+            return this;
+        }
+
+        public <K, V> Builder put(Map<K, V> sourceMap) {
+            sourceMap.forEach((k, v) -> json.put(k.toString(), v.toString()));
+            return this;
+        }
+
+        public <K, V> Builder put(K[] keys, V[] values) {
+            return put(asList(keys), asList(values));
+        }
+
+        public <K, V> Builder put(K[] keys, Function<K, V> valueFn) {
+            return put(asList(keys), valueFn);
+        }
+
+        public JsonObject build() {
+            return json;
+        }
+
+        public static <K, V> JsonObject json(K key, V value) {
+            return create()
+                .put(key.toString(), value)
+                .build();
+        }
+
+        public static <K, V> JsonObject json(Iterable<K> keys, Iterable<V> values) {
+            return create()
+                .put(keys, values)
+                .build();
+        }
+
+        public static <K, V> JsonObject json(Iterable<K> keys, Function<K, V> valueFn) {
+            return create()
+                .put(keys, valueFn)
+                .build();
+        }
+
+        public static <K, V> JsonObject json(Map<K, V> sourceMap) {
+            return create()
+                .put(sourceMap)
+                .build();
+        }
+
+        public static <K, V> JsonObject json(K[] keys, V[] values) {
+            return create()
+                .put(keys, values)
+                .build();
+        }
+
+        public static <K, V> JsonObject json(K[] keys, Function<K, V> valueFn) {
+            return create()
+                .put(keys, valueFn)
+                .build();
+        }
+
+    }
 }

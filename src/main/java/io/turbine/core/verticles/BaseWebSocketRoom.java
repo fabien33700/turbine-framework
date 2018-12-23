@@ -2,7 +2,7 @@ package io.turbine.core.verticles;
 
 import io.reactivex.Completable;
 import io.reactivex.Observable;
-import io.turbine.core.json.JsonBuilder;
+import io.turbine.core.json.JsonFormat;
 import io.turbine.core.utils.rxcollection.ReactiveList;
 import io.turbine.core.utils.rxcollection.events.ListEvent;
 import io.turbine.core.utils.rxcollection.impl.ReactiveListImpl;
@@ -39,7 +39,7 @@ public abstract class BaseWebSocketRoom<S, R, B>
 
     private void handleWebSocketConnection(final WsConnection<S> conn) {
         conn.webSocket().textMessageHandler(text ->
-                broadcast(new MessageImpl<>(conn, parseMessage(JsonBuilder.fromString(text)))) );
+                broadcast(new MessageImpl<>(conn, parseMessage(JsonFormat.fromString(text)))) );
         conn.webSocket().closeHandler(v -> connections.remove(conn));
     }
 
@@ -66,11 +66,6 @@ public abstract class BaseWebSocketRoom<S, R, B>
     @Override
     public WebSocketLadder<S, R, B> getLadder() {
         return ladder;
-    }
-
-    @Override
-    public void clearCapacity() {
-        this.capacity = -1;
     }
 
     @Override

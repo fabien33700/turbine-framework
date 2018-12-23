@@ -151,7 +151,6 @@ public abstract class BaseVerticle extends AbstractVerticle implements Verticle 
         return fromAction(() -> logger.debug("Verticle is starting ..."));
     }
 
-
     @Override
     public Completable rxStop() {
         return allSubVerticlesStop().concatWith(completable(
@@ -160,32 +159,11 @@ public abstract class BaseVerticle extends AbstractVerticle implements Verticle 
         ));
     }
 
-   /* @Override
-    public final void inject(final Map<String, Object> config) {
-        requireNonNull(config, "config");
-        inject(new JsonObject(config));
-    }
-
-    public final void inject(final JsonObject config) {
-        requireNonNull(config, "config");
-        this.config = config.mergeIn(this.config);
-    }*/
-
-   /* public final <V extends BaseVerticle>
-    V deployVerticle(Class<V> verticleClass, Map<String, Object> parameters) {
-        return deployVerticle(from(verticleClass), parameters);
-    }
-
-    public final <V extends BaseVerticle>
-    V deployVerticle(Supplier<V> verticleSupplier, Map<String, Object> parameters) {
-        return deployVerticle(fromSupplier(verticleSupplier), parameters);
-    }*/
-
     @Override
     public <V extends Verticle>
     Single<V> deployVerticle(Class<V> verticleClass, JsonObject config) {
         return deployer().deployVerticle(verticleClass, config)
-                .map(this::addChild)
+                .map(this::appendChild)
                 .doOnError(t -> logger.error("Deployment of {} has failed.", verticleClass.getName()));
     }
 
@@ -193,30 +171,16 @@ public abstract class BaseVerticle extends AbstractVerticle implements Verticle 
     public <V extends Verticle>
     Single<V> deployVerticle(VerticleFactory<V> factory, Class<V> verticleClass, JsonObject config) {
         return deployer().deployVerticle(factory, verticleClass, config)
-            .map(this::addChild)
+            .map(this::appendChild)
             .doOnError(t -> logger.error("Deployment of {} has failed.", verticleClass.getName()));
     }
 
-    private <V extends Verticle> V addChild(V verticle) {
+    private <V extends Verticle> V appendChild(V verticle) {
         verticle.setParent(this);
         children.add(verticle);
 
         return verticle;
     }
-
-    /*private <V extends BaseVerticle>
-    V deployVerticle(VerticleFactory<V> verticleFactory, Map<String, Object> parameters) {
-        V verticle = deployer().deployVerticle(verticleFactory, parameters);
-
-        if (verticle == null) {
-            throw new RuntimeException("Deployment of " + verticleFactory.name() + " had failed.");
-        }
-
-        verticle.setParent(this);
-        children.add(verticle);
-
-        return verticle;
-    }*/
 
     @Override
     public void setParent(Verticle verticle) {
@@ -224,7 +188,7 @@ public abstract class BaseVerticle extends AbstractVerticle implements Verticle 
     }
 
     @Override
-    public List<Verticle> getChildren() {
+    public Iterable<Verticle> getChildren() {
         return unmodifiableList(children);
     }
 
