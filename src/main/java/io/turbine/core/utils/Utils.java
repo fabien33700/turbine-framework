@@ -7,6 +7,7 @@ import org.apache.commons.lang3.math.NumberUtils;
 
 import java.io.*;
 import java.lang.reflect.ParameterizedType;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
@@ -192,6 +193,14 @@ public class Utils {
 
         public static String formatDateIso3601(TemporalAccessor temporal) {
             return ISO_8601_FORMATTER.format(temporal);
+        }
+
+        public static LocalDateTime toLocalDateTime(final Date date) {
+            return LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
+        }
+
+        public static Date toDate(final LocalDateTime ldt) {
+            return Date.from(ldt.atZone(ZoneId.systemDefault()).toInstant());
         }
     }
 

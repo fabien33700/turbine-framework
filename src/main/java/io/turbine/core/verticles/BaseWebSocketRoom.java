@@ -23,7 +23,7 @@ public abstract class BaseWebSocketRoom<S, R, B>
 
     private final R roomIdentifier;
 
-    private long capacity = -1;
+    private long capacity = 0;
 
     protected BaseWebSocketRoom(WebSocketLadder<S, R, B> ladder, R roomIdentifier) {
         super();
