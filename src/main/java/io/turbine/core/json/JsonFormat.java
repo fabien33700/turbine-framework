@@ -1,13 +1,14 @@
 package io.turbine.core.json;
 
+import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 import java.time.Instant;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collector;
@@ -42,10 +43,10 @@ public final class JsonFormat {
 
     @SuppressWarnings("unchecked")
     public static String printJson(Object response) {
-        /* For lists, call parseJsonObject on each item */
-        if (response instanceof List) {
-            List<Object> list = (List<Object>) response;
-            JsonArray array = list.stream()
+        /* For collections, call parseJsonObject on each item */
+        if (response instanceof Collection) {
+            JsonArray array = ((Collection<Object>) response)
+                    .stream()
                     .map(JsonFormat::parseJsonObject)
                     .collect(jsonArrayCollector());
 
@@ -70,6 +71,10 @@ public final class JsonFormat {
         } else if (isPrimitiveOrWrapper(response)) {
             return response.toString();
 
+        /* For JsonArray collection object */
+        } else if (response instanceof JsonArray) {
+            return ((JsonArray) response).encodePrettily();
+
         } else {
             return parseJsonObject(response).encodePrettily();
         }
@@ -81,7 +86,7 @@ public final class JsonFormat {
     }
 
     @SuppressWarnings("unchecked")
-    public static JsonObject fromString(String json) {
+    public static JsonObject fromString(String json) throws DecodeException {
         Map<String, Object> map = (Map<String, Object>) Json.decodeValue(json, Map.class);
         return new JsonObject(map);
     }
