@@ -12,8 +12,7 @@ import io.turbine.core.web.handlers.ResponseAdapter;
 import io.turbine.core.web.handlers.ResponsePrinter;
 import io.turbine.core.web.handlers.ResponseTypeEnum;
 import io.turbine.core.web.mapping.RequestHandling;
-import io.turbine.core.web.mapping.RequestHandlingMapper;
-import io.turbine.core.web.mapping.ResponseType;
+import io.turbine.core.web.mapping.RequestHandlingHelper;
 import io.turbine.core.web.router.ReactiveRouter;
 import io.turbine.core.web.router.Response;
 import io.vertx.core.Context;
@@ -110,13 +109,8 @@ public abstract class BaseWebVerticle extends BaseHttpVerticle implements WebVer
                     throw new RuntimeException("Unable to call the action method " + method + ".", ex);
                 }
             };
-
-            ResponseType responseTypeAnno = method.getAnnotation(ResponseType.class);
-            ResponseTypeEnum responseType =
-                    orElseGet(responseTypeAnno, ResponseType::value, ResponseTypeEnum.JSON);
-
             register(
-                    flowable.doOnNext( getSuitableResponseTypeHandler(responseType, requestHandler))
+                    flowable.doOnNext( getSuitableResponseTypeHandler(mapping.type(), requestHandler))
                             .subscribe());
             logger.info("Mapped route {} {} to method {}() (using {} strategy).",
                     mapping.method(), mapping.path(), method.getName(), mapping.strategy());

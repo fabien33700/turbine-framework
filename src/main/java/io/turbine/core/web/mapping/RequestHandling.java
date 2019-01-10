@@ -1,6 +1,7 @@
 package io.turbine.core.web.mapping;
 
 import io.reactivex.BackpressureStrategy;
+import io.turbine.core.web.handlers.ResponseTypeEnum;
 import io.vertx.core.http.HttpMethod;
 
 import java.lang.annotation.ElementType;
@@ -14,4 +15,5 @@ public @interface RequestHandling {
     String path() default "/";
     HttpMethod method() default HttpMethod.GET;
     BackpressureStrategy strategy() default BackpressureStrategy.DROP;
+    ResponseTypeEnum type() default ResponseTypeEnum.JSON;
 }
