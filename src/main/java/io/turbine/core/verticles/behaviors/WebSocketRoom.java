@@ -23,7 +23,7 @@ public interface WebSocketRoom<S, R, B> extends WebSocketVerticle<S, B> {
      * at room creation and will destroy the room once the signal is completed.
      * @return A Completable instance
      */
-    Completable endOfLifeSignal();
+    Completable emptySignal();
 
     /**
      * A reference to the parent ladder.
@@ -56,6 +56,12 @@ public interface WebSocketRoom<S, R, B> extends WebSocketVerticle<S, B> {
      * @return the room occupation
      */
     long occupation();
+
+    /**
+     * Returns the total count of messages sent in the room.
+     * @return The messages count
+     */
+    long messagesCount();
 
     /**
      * The room identifier.

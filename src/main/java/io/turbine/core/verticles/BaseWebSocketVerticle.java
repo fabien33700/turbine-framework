@@ -2,6 +2,7 @@ package io.turbine.core.verticles;
 
 import io.reactivex.Observable;
 import io.reactivex.subjects.BehaviorSubject;
+import io.reactivex.subjects.Subject;
 import io.turbine.core.utils.rxcollection.ReactiveList;
 import io.turbine.core.utils.rxcollection.events.ListEvent;
 import io.turbine.core.utils.rxcollection.impl.ReactiveListImpl;
@@ -15,7 +16,7 @@ public abstract class BaseWebSocketVerticle<S, R, B> extends BaseVerticle
     protected final ReactiveList<WsConnection<S>> connections = new ReactiveListImpl<>();
 
     // FIXME Messages here will be send to everyone, use with caution !
-    protected final Observable<Message<S,B>> messages = BehaviorSubject.create();
+    protected final Subject<Message<S,B>> messages = BehaviorSubject.create();
 
     @Override
     public Observable<Message<S, B>> messages() {
