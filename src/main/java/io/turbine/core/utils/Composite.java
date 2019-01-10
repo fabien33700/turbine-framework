@@ -35,7 +35,5 @@ public interface Composite<T extends Composite<T>> {
      * Indicates whether the object has a parent.
      * @return true if a parent is defined, false otherwise
      */
-    default boolean hasParent() {
-        return getParent().isPresent();
-    }
+    boolean hasParent();
 }
