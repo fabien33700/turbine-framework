@@ -16,6 +16,7 @@ import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.nio.file.Paths;
 
+import static io.turbine.core.deployment.VerticleFactory.factory;
 import static io.turbine.core.utils.Utils.fromInputStream;
 import static io.turbine.core.utils.Utils.orElse;
 
@@ -122,26 +123,35 @@ public final class VerticleDeployer {
      */
     public final <V extends Verticle>
     Single<V> deployVerticle(Class<V> verticleClass, JsonObject config) {
-        return deployVerticle(verticleClass::newInstance, verticleClass, config);
+        return deployVerticle(factory(verticleClass), config);
     }
 
     /**
      * Deploy a verticle from its class, with given configuration.
      * Verticle is instanciated from the given verticle factory.
      * @param factory The factory used to create the Verticle instance
-     * @param verticleClass The class of the verticle to deploy
      * @param config The verticle base configuration
      * @param <V> The type of the Verticle
      * @return A single of freshly-deployed Verticle instance
      */
     public final <V extends Verticle>
-    Single<V> deployVerticle(VerticleFactory<V> factory, Class<V> verticleClass, JsonObject config) {
+    Single<V> deployVerticle(VerticleFactory<V> factory, JsonObject config) {
+        V verticle;
+        try {
+            verticle = factory.create();
+        } catch (Exception ex) {
+            // The factory could not instanciate a correct verticle instance
+            Throwable t = new RuntimeException("The factory " + factory +
+                    " failed to instanciate a verticle.", ex);
+            return Single.error(t);
+        }
+
         config = orElse(config, new JsonObject());
 
         try {
             // Dispatch the verticle configuration according to its class
             // and merging it with additionnal configuration
-            config = dispatcher.dispatch(readConfiguration(), verticleClass)
+            config = dispatcher.dispatch(readConfiguration(), verticle.getClass())
                     .mergeIn(config);
         } catch (ConfigurationException ex) {
             logger.warn("Error reading configuration", ex);
@@ -150,26 +160,18 @@ public final class VerticleDeployer {
         DeploymentOptions options = new DeploymentOptions();
         options.setConfig(config);
 
-        try {
-            V verticle = factory.create();
-            // Create the single from the Vert.x deployment result
-            return Single.create(emitter ->
-                vertx.deployVerticle(() -> verticle, options, async -> {
-                    if (async.failed()) {
-                        // raising the error cause
-                        emitter.onError(async.cause());
-                    } else {
-                        // emitting the freshly-deployed verticle
-                        emitter.onSuccess(verticle);
-                    }
+        // Create the single from the Vert.x deployment result
+        return Single.create(emitter ->
+            vertx.deployVerticle(() -> verticle, options, async -> {
+                if (async.failed()) {
+                    // raising the error cause
+                    emitter.onError(async.cause());
+                } else {
+                    // emitting the freshly-deployed verticle
+                    emitter.onSuccess(verticle);
                 }
-            ));
-        } catch (Exception ex) {
-            // The factory could not instanciate a correct verticle instance
-            Throwable t = new RuntimeException("Could not deploy " + verticleClass.getSimpleName()
-                    + " verticle.", ex);
-            return Single.error(t);
-        }
+            }
+        ));
     }
 
     /**

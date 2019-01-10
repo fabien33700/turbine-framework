@@ -1,49 +1,51 @@
 package io.turbine.core.verticles;
 
 import io.reactivex.Completable;
-import io.reactivex.Single;
 import io.reactivex.disposables.Disposable;
 import io.turbine.core.configuration.Reader;
 import io.turbine.core.deployment.Turbine;
 import io.turbine.core.deployment.VerticleDeployer;
-import io.turbine.core.deployment.VerticleFactory;
+import io.turbine.core.deployment.annotations.Shared;
 import io.turbine.core.verticles.behaviors.Verticle;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.reactivex.core.AbstractVerticle;
+import io.vertx.reactivex.core.shareddata.AsyncMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
-import static io.reactivex.Completable.fromAction;
-import static io.turbine.core.utils.Utils.Reactive.completable;
+import static io.reactivex.Completable.*;
+import static io.turbine.core.utils.Utils.Reflection.setFieldValue;
+import static io.turbine.core.utils.Utils.Strings.isEmpty;
 import static java.util.Arrays.asList;
 import static java.util.Collections.unmodifiableList;
 import static java.util.Optional.ofNullable;
 
 /**
  * Defines a base implementation for all the verticles in the application.
- *
+ * <p>
  * This base provides convenient base features: logging, configuration
  * reading and reactive subscriptions self-disposing.
- *
+ * <p>
  * It is built upon the Vert.x AbstractVerticle specification.
  *
- * @see AbstractVerticle
  * @author Fabien <fabien DOT lehouedec AT gmail DOT com>
+ * @see AbstractVerticle
  */
 public abstract class BaseVerticle extends AbstractVerticle implements Verticle {
 
     /**
      * The verticle logger instance
      */
-    protected final Logger logger = LoggerFactory.getLogger(getClass());
+    protected Logger logger = LoggerFactory.getLogger(getClass());
 
     /**
      * A list for storing all the verticles subscriptions to observables
@@ -58,6 +60,7 @@ public abstract class BaseVerticle extends AbstractVerticle implements Verticle 
     /**
      * A list of children verticles deployed by the current verticle
      */
+    /* FIXME, Replace List by a Map with deploymentId as key */
     private final List<Verticle> children = new ArrayList<>();
 
     /**
@@ -65,6 +68,9 @@ public abstract class BaseVerticle extends AbstractVerticle implements Verticle 
      */
     private Verticle parent;
 
+    /**
+     * The verticle configuration
+     */
     private JsonObject config;
 
     /**
@@ -76,14 +82,17 @@ public abstract class BaseVerticle extends AbstractVerticle implements Verticle 
     @Override
     public void init(Vertx vertx, Context context) {
         super.init(vertx, context);
-
         reader = new Reader(config());
     }
 
-    /*@Override
-    public final JsonObject config() {
-        return config;
-    }*/
+    /**
+     * Change the logger's name.
+     *
+     * @param name The new logger name
+     */
+    protected final void setLoggerName(String name) {
+        logger = LoggerFactory.getLogger(name);
+    }
 
     /**
      * A method to register a Disposable into verticle subscriptions.
@@ -128,7 +137,7 @@ public abstract class BaseVerticle extends AbstractVerticle implements Verticle 
         return children.stream()
                 .map(Verticle::rxStop)
                 .reduce(Completable::concatWith)
-                .orElse(Completable.complete());
+                .orElse(complete());
     }
 
     protected final VerticleDeployer deployer() {
@@ -148,38 +157,41 @@ public abstract class BaseVerticle extends AbstractVerticle implements Verticle 
 
     @Override
     public Completable rxStart() {
-        return fromAction(() -> logger.debug("Verticle is starting ..."));
+        return getSharedData();
+    }
+
+    private Completable getSharedData() {
+        Completable loaded = complete();
+        for (Field field : getClass().getDeclaredFields()) {
+            if (field.isAnnotationPresent(Shared.class)
+                    && field.getType().isAssignableFrom(AsyncMap.class)) {
+                final String name;
+                if (isEmpty(field.getAnnotation(Shared.class).name()))
+                    name = field.getName();
+                else
+                    name = field.getAnnotation(Shared.class).name();
+
+                loaded = loaded.concatWith(vertx.sharedData().rxGetAsyncMap(name)
+                        .flatMapCompletable(asyncmap -> {
+                            try {
+                                setFieldValue(this, field, asyncmap);
+                                logger.debug("'{}' shared async map loaded", name);
+                                return complete();
+                            } catch (ReflectiveOperationException ex) {
+                                logger.warn("Could not inject the shared async map {} into the verticle {} field",
+                                        name, getClass().getSimpleName());
+                                return error(ex);
+                            }
+                        }));
+            }
+        }
+        return loaded;
     }
 
     @Override
     public Completable rxStop() {
-        return allSubVerticlesStop().concatWith(completable(
-            () -> logger.debug("Verticle is starting ..."),
-            () -> subscriptions.forEach(Disposable::dispose)
-        ));
-    }
-
-    @Override
-    public <V extends Verticle>
-    Single<V> deployVerticle(Class<V> verticleClass, JsonObject config) {
-        return deployer().deployVerticle(verticleClass, config)
-                .map(this::appendChild)
-                .doOnError(t -> logger.error("Deployment of {} has failed.", verticleClass.getName()));
-    }
-
-    @Override
-    public <V extends Verticle>
-    Single<V> deployVerticle(VerticleFactory<V> factory, Class<V> verticleClass, JsonObject config) {
-        return deployer().deployVerticle(factory, verticleClass, config)
-            .map(this::appendChild)
-            .doOnError(t -> logger.error("Deployment of {} has failed.", verticleClass.getName()));
-    }
-
-    private <V extends Verticle> V appendChild(V verticle) {
-        verticle.setParent(this);
-        children.add(verticle);
-
-        return verticle;
+        return allSubVerticlesStop().concatWith(
+            fromAction(() -> subscriptions.forEach(Disposable::dispose)) );
     }
 
     @Override
@@ -195,5 +207,10 @@ public abstract class BaseVerticle extends AbstractVerticle implements Verticle 
     @Override
     public Optional<Verticle> getParent() {
         return ofNullable(parent);
+    }
+
+    @Override
+    public boolean hasParent() {
+        return getParent().isPresent();
     }
 }
