@@ -4,13 +4,17 @@ import io.reactivex.Observable;
 import io.reactivex.subjects.BehaviorSubject;
 import io.reactivex.subjects.Subject;
 import io.turbine.core.utils.rxcollection.ReactiveList;
-import io.turbine.core.utils.rxcollection.events.ListEvent;
 import io.turbine.core.utils.rxcollection.events.EventType;
+import io.turbine.core.utils.rxcollection.events.ListEvent;
 import io.turbine.core.utils.rxcollection.observers.ReactiveListObserver;
 
 import java.util.*;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static io.turbine.core.utils.rxcollection.events.EventFactory.*;
 import static java.util.Collections.unmodifiableList;
@@ -46,6 +50,11 @@ public class ReactiveListImpl<T> implements ReactiveList<T> {
         @Override
         public Observable<ListEvent<T>> modifications() {
             return events.filter(e -> e.eventType() == EventType.MODIFICATION);
+        }
+
+        @Override
+        public List<T> readList() {
+            return unmodifiableList(delegate);
         }
     }
 
@@ -100,6 +109,11 @@ public class ReactiveListImpl<T> implements ReactiveList<T> {
     @Override
     public Observable<ListEvent<T>> modifications() {
         return observer.modifications();
+    }
+
+    @Override
+    public List<T> readList() {
+        return observer.readList();
     }
 
     public List<T> getDelegate() {
@@ -188,7 +202,6 @@ public class ReactiveListImpl<T> implements ReactiveList<T> {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public boolean retainAll(Collection<?> c) {
         Collection<T> excluded = delegate.stream()
                 .filter(t -> !c.contains(t))
@@ -294,5 +307,52 @@ public class ReactiveListImpl<T> implements ReactiveList<T> {
     @Override
     public ReactiveListObserver<T> getObserver() {
         return observer;
+    }
+
+    /** Delegate methods **/
+
+    @Override
+    public void replaceAll(UnaryOperator<T> operator) {
+
+    }
+
+    @Override
+    public void sort(Comparator<? super T> c) {
+        delegate.sort(c);
+    }
+
+    @Override
+    public Spliterator<T> spliterator() {
+        return delegate.spliterator();
+    }
+
+    @Override
+    public boolean removeIf(Predicate<? super T> filter) {
+        T deleted = null;
+        for (T item : delegate) {
+            if (filter.test(item)) {
+                int index = delegate.indexOf(item);
+                deleted = item;
+                if (delegate.remove(item)) {
+                    events.onNext(newDeletionListEvent(this, deleted, index));
+                }
+            }
+        }
+        return deleted != null;
+    }
+
+    @Override
+    public Stream<T> stream() {
+        return delegate.stream();
+    }
+
+    @Override
+    public Stream<T> parallelStream() {
+        return delegate.parallelStream();
+    }
+
+    @Override
+    public void forEach(Consumer<? super T> action) {
+        delegate.forEach(action);
     }
 }

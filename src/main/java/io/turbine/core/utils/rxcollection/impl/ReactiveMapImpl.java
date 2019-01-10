@@ -13,6 +13,7 @@ import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
 import static io.turbine.core.utils.rxcollection.events.EventFactory.*;
+import static java.util.Collections.unmodifiableMap;
 
 public class ReactiveMapImpl<K, V> implements ReactiveMap<K, V> {
 
@@ -36,6 +37,11 @@ public class ReactiveMapImpl<K, V> implements ReactiveMap<K, V> {
         return observer.modifications();
     }
 
+    @Override
+    public Map<K, V> readMap() {
+        return observer.readMap();
+    }
+
     /**
      * A standard ReactiveListObserver internal implementation, that uses the
      * global events source and partition it according to the EventType.
@@ -55,6 +61,11 @@ public class ReactiveMapImpl<K, V> implements ReactiveMap<K, V> {
         @Override
         public Observable<MapEvent<K, V>> modifications() {
             return events.filter(e -> e.eventType() == EventType.MODIFICATION);
+        }
+
+        @Override
+        public Map<K, V> readMap() {
+            return unmodifiableMap(delegate);
         }
     }
 
@@ -147,6 +158,12 @@ public class ReactiveMapImpl<K, V> implements ReactiveMap<K, V> {
             events.onNext(newDeletionMapEvent(this, (K) key, previous));
         }
         return previous;
+    }
+
+    /* TODO */
+    @Override
+    public boolean remove(Object key, Object value) {
+        return false;
     }
 
     @Override

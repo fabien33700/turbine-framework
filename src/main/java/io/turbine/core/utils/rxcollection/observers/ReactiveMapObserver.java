@@ -3,6 +3,8 @@ package io.turbine.core.utils.rxcollection.observers;
 import io.reactivex.Observable;
 import io.turbine.core.utils.rxcollection.events.MapEvent;
 
+import java.util.Map;
+
 /**
  * The standard behavior of a reactive map observer, which means
  * an object that must provide the Observable sources of map changes events.
@@ -29,4 +31,10 @@ public interface ReactiveMapObserver<K, V> {
      * @return A Observable of MapEvent
      */
     Observable<MapEvent<K, V>> modifications();
+
+    /**
+     * Returns a readonly copy of the source map.
+     * @return A Map instance
+     */
+    Map<K, V> readMap();
 }
