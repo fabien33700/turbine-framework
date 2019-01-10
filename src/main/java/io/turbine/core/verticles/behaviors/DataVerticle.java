@@ -1,7 +1,7 @@
 package io.turbine.core.verticles.behaviors;
 
 import io.reactivex.Single;
-import io.turbine.core.jdbc.QueryBuilder;
+import io.turbine.core.jdbc.queries.QueryBuilder;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.sql.SQLOptions;
 import io.vertx.reactivex.ext.sql.SQLConnection;
@@ -15,22 +15,21 @@ import io.vertx.reactivex.ext.sql.SQLConnection;
  *
  * @author Fabien <fabien DOT lehouedec AT gmail DOT com>
  */
-public interface JdbcVerticle {
+public interface DataVerticle {
 
     /**
      * Provides the JDBC configuration JsonObject, which contains
      * required configuration such as JDBC Uri and credentials.
      * This object is used by the async client. See its documentation
      * to known with which key match right parameters
-     * @see io.vertx.reactivex.ext.jdbc.JDBCClient
      * @return A JsonObject that wraps the DBMS connection configuration
      */
     JsonObject jdbcConfiguration();
 
     /**
-     * Returns a QueryBuilder which makes query building and
+     * Returns a QueryBuilderImpl which makes query building and
      * result transforming easier
-     * @return A QueryBuilder instance
+     * @return A QueryBuilderImpl instance
      */
     QueryBuilder query();
 
