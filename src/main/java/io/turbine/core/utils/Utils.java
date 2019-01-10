@@ -1,11 +1,13 @@
 package io.turbine.core.utils;
 
 import io.reactivex.Completable;
-import io.reactivex.Single;
-import io.reactivex.functions.Action;
+import io.reactivex.Observable;
 import org.apache.commons.lang3.math.NumberUtils;
 
 import java.io.*;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.AnnotatedElement;
+import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -18,6 +20,7 @@ import java.util.stream.Collectors;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
+import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Stream.of;
 
@@ -34,44 +37,9 @@ public class Utils {
      * An utility helper class for Rx-Java 2
      */
     public static class Reactive {
-        public interface SingleSupplier<V> extends Supplier<Single<V>> {}
-        public interface CompletableSupplier extends Supplier<Completable> {}
-
-        public static Completable completable(Action... actions) {
-            return of(actions)
-                    .map(Completable::fromAction)
-                    .reduce(Completable::concatWith)
-                    .orElse(Completable.complete());
-        }
-
-        public static Completable completable(Completable... completables) {
-            return of(completables)
-                    .reduce(Completable::concatWith)
-                    .orElse(Completable.complete());
-        }
-
-        public static Completable completable(CompletableSupplier... completables) {
-            return of(completables)
-                    .map(Supplier::get)
-                    .filter(Objects::nonNull)
-                    .reduce(Completable::concatWith)
-                    .orElse(Completable.complete());
-        }
-
-        public static Completable completable(Single<?>... singles) {
-            return of(singles)
-                    .map(Completable::fromSingle)
-                    .reduce(Completable::concatWith)
-                    .orElse(Completable.complete());
-        }
-
-        public static Completable completable(SingleSupplier<?>... singles) {
-            return of(singles)
-                    .map(Supplier::get)
-                    .filter(Objects::nonNull)
-                    .map(Completable::fromSingle)
-                    .reduce(Completable::concatWith)
-                    .orElse(Completable.complete());
+        public static Completable completeOnFirst(Observable<?> observable) {
+            return Completable.create(emitter ->
+                    observable.subscribe((x) -> emitter.onComplete()));
         }
     }
 
@@ -119,6 +87,32 @@ public class Utils {
             final Class<?> clazz = response.getClass();
             return clazz.isPrimitive() ||
                     asList(PRIMITIVES_WRAPPER_AND_TYPES).contains(clazz);
+        }
+
+        public static void setFieldValue(Object object, Field field, Object value) throws ReflectiveOperationException {
+            requireNonNull(object);
+            requireNonNull(field);
+            if (!field.equals(object.getClass().getDeclaredField(field.getName()))) {
+                throw new IllegalArgumentException("field is not part of the object class");
+            }
+            try {
+                field.setAccessible(true);
+                field.set(object, value);
+            } finally {
+                field.setAccessible(false);
+            }
+        }
+
+        @SafeVarargs
+        public static boolean annotatedWithOne(AnnotatedElement annotated,
+                                            Class<? extends Annotation>... annotationsClasses) {
+            for (Class<? extends Annotation> annotationClass : annotationsClasses) {
+                if (annotated.isAnnotationPresent(annotationClass)) {
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 
@@ -172,15 +166,23 @@ public class Utils {
     }
 
     public static <E> E orElse(E expression, E defaultValue) {
-        return expression == null ? defaultValue : expression;
+        return isEmpty(expression) ? defaultValue : expression;
     }
 
     public static <E, P> P orElseGet(E expression, Function<E, P> propertyAccessor, P defaultValue) {
-        return expression == null ? defaultValue : propertyAccessor.apply(expression);
+        return isEmpty(expression) ? defaultValue : propertyAccessor.apply(expression);
     }
 
     public static <E> E orElse(Supplier<E> provider, E defaultValue) {
         return orElse(provider.get(), defaultValue);
+    }
+
+    public static boolean isEmpty(Object object) {
+        return (object == null) ||
+                ((object instanceof String) && ((String) object).isEmpty()) ||
+                ((object instanceof Collection) && ((Collection) object).isEmpty()) ||
+                ((object instanceof Map) && ((Map) object).isEmpty()) ||
+                ((object.getClass().isArray()) && ((Object[]) object).length == 0);
     }
 
     public static final class Dates {
