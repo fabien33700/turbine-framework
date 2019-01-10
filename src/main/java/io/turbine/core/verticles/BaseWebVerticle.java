@@ -22,6 +22,7 @@ import io.vertx.reactivex.core.http.HttpServer;
 import io.vertx.reactivex.ext.web.Router;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.ext.web.handler.BodyHandler;
+import io.vertx.reactivex.ext.web.handler.CorsHandler;
 
 import java.lang.reflect.Method;
 import java.util.Map;
@@ -77,8 +78,16 @@ public abstract class BaseWebVerticle extends BaseHttpVerticle implements WebVer
         if (router == null) {
             router = new ReactiveRouter(Router.router(this.vertx));
             router.route().handler(BodyHandler.create());
+            if (corsHandler() != null) {
+                router.route().handler(corsHandler());
+            }
         }
         applyRequestMappings();
+    }
+
+    @Override
+    public CorsHandler corsHandler() {
+        return null;
     }
 
     private void applyRequestMappings() {
