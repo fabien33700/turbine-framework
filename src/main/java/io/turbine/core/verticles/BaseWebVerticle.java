@@ -5,6 +5,7 @@ import io.reactivex.Single;
 import io.reactivex.functions.Consumer;
 import io.turbine.core.errors.exceptions.http.HttpException;
 import io.turbine.core.errors.exceptions.http.ServerErrorException;
+import io.turbine.core.errors.handling.ExceptionHandler;
 import io.turbine.core.json.JsonFormat;
 import io.turbine.core.verticles.behaviors.WebVerticle;
 import io.turbine.core.web.handlers.RequestHandler;
@@ -27,9 +28,7 @@ import java.lang.reflect.Method;
 import java.util.Map;
 
 import static io.reactivex.Single.just;
-import static io.turbine.core.utils.Utils.orElseGet;
 import static io.turbine.core.web.router.Response.ok;
-
 
 /**
  * TODO Docstrings to rewrite *
@@ -91,7 +90,7 @@ public abstract class BaseWebVerticle extends BaseHttpVerticle implements WebVer
 
     private void applyRequestMappings() {
         Map<RequestHandling, Method> mappings =
-                RequestHandlingMapper.findMappings(this, true);
+                RequestHandlingHelper.findMappings(this, true);
 
         mappings.forEach((mapping, method) -> {
             Flowable<RoutingContext> flowable = router()
@@ -102,9 +101,10 @@ public abstract class BaseWebVerticle extends BaseHttpVerticle implements WebVer
                 try {
                     /* In case of raw response (not wrapped in a Response object),
                      * we create a 200 OK by default */
-                    Single single = (Single) method.invoke(this, rc);
-                    return single.map(value ->
-                            (value instanceof Response) ? value : ok(value));
+                    Object[] params = RequestHandlingHelper.interpolateParams(method, rc);
+                    Single single = (Single) method.invoke(this, params);
+                    return single.map(value -> (value instanceof Response) ? value : ok(value) )
+                            .onErrorResumeNext(defaultExceptionHandler);
                 } catch (ReflectiveOperationException ex) {
                     throw new RuntimeException("Unable to call the action method " + method + ".", ex);
                 }
@@ -154,7 +154,6 @@ public abstract class BaseWebVerticle extends BaseHttpVerticle implements WebVer
                 requestHandler);
     }
 
-    // TODO create response method overloads with exception handler
     private Consumer<RoutingContext>
     response(ResponseAdapter adapter,
              ResponsePrinter printer,
@@ -175,12 +174,7 @@ public abstract class BaseWebVerticle extends BaseHttpVerticle implements WebVer
                 .end(body);
     }
 
-    /*
-     * Exception Handlers
-     */
-    // TODO Generalize exception handling to object instead of only provinding response
-    // TODO Automatically call onErrorResumeNext() on Single returned by request mapping action method
-    protected Single<Response> defaultExceptionHandler(Throwable t) {
+    private ExceptionHandler defaultExceptionHandler = t -> {
         try {
             try {
                 throw t;
@@ -192,11 +186,11 @@ public abstract class BaseWebVerticle extends BaseHttpVerticle implements WebVer
         } catch (HttpException httpEx) {
             if (httpEx instanceof ServerErrorException) {
                 String uuid = ((ServerErrorException) httpEx).getUuid();
-                logger.error("A server error exception has occurred : " + uuid, t.getCause());
+                logger.error("A server error exception has occurred : " + uuid, t);
             }
 
             return just(
                     new Response(httpEx, httpEx.statusCode()));
         }
-    }
+    };
 }

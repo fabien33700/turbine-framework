@@ -16,4 +16,8 @@ public final class HttpConstants {
     public static class ResponseHeaders {
         public static final String CONTENT_TYPE = "Content-Type";
     }
+
+    public static class RequestHeaders {
+        public static final String AUTHORIZATION = "Authorization";
+    }
 }
