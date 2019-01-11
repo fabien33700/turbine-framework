@@ -99,11 +99,12 @@ public abstract class BaseWebVerticle extends BaseHttpVerticle implements WebVer
 
             @SuppressWarnings("unchecked") final RequestHandler requestHandler = (rc) -> {
                 try {
-                    /* In case of raw response (not wrapped in a Response object),
-                     * we create a 200 OK by default */
                     Object[] params = RequestHandlingHelper.interpolateParams(method, rc);
                     Single single = (Single) method.invoke(this, params);
-                    return single.map(value -> (value instanceof Response) ? value : ok(value) )
+                    return single.map(value ->
+                            /* In case of raw response (not wrapped in a Response object),
+                             * we create a 200 OK by default */
+                            (value instanceof Response) ? value : ok(value))
                             .onErrorResumeNext(defaultExceptionHandler);
                 } catch (ReflectiveOperationException ex) {
                     throw new RuntimeException("Unable to call the action method " + method + ".", ex);
@@ -190,7 +191,7 @@ public abstract class BaseWebVerticle extends BaseHttpVerticle implements WebVer
             }
 
             return just(
-                    new Response(httpEx, httpEx.statusCode()));
+                    new Response<>(httpEx, httpEx.statusCode()));
         }
     };
 }
