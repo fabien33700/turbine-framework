@@ -1,5 +1,6 @@
 package io.turbine.core.ws;
 
+import io.turbine.core.json.JsonSerializable;
 import io.vertx.reactivex.core.http.ServerWebSocket;
 
 import java.time.Instant;
@@ -12,7 +13,7 @@ import java.time.Instant;
  * the instant of connection opening and of last activity.
  * @param <S> The type for representing the message sender
  */
-public interface WsConnection<S> {
+public interface WsConnection<S extends JsonSerializable> {
 
     S sender();
     ServerWebSocket webSocket();

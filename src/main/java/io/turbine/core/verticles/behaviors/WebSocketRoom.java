@@ -2,6 +2,7 @@ package io.turbine.core.verticles.behaviors;
 
 import io.reactivex.Completable;
 import io.turbine.core.errors.exceptions.ws.WebSocketException;
+import io.turbine.core.json.JsonSerializable;
 import io.turbine.core.ws.WsConnection;
 
 /**
@@ -16,7 +17,7 @@ import io.turbine.core.ws.WsConnection;
  * @param <B> The type of the message (B)ody
  * @author Fabien <fabien DOT lehouedec AT gmail DOT com>
  */
-public interface WebSocketRoom<S, R, B> extends WebSocketVerticle<S, B> {
+public interface WebSocketRoom<S extends JsonSerializable, R, B> extends WebSocketVerticle<S, B> {
 
     /**
      * The end-of-life signal. The associated ladder subscribes to it

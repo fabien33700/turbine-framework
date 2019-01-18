@@ -4,6 +4,7 @@ import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.turbine.core.errors.exceptions.http.UnauthorizedException;
+import io.turbine.core.json.JsonSerializable;
 import io.turbine.core.utils.rxcollection.ReactiveMap;
 import io.turbine.core.utils.rxcollection.impl.ReactiveMapImpl;
 import io.turbine.core.utils.rxcollection.observers.ReactiveMapObserver;
@@ -24,12 +25,12 @@ import io.vertx.reactivex.core.http.ServerWebSocket;
 import java.util.concurrent.TimeUnit;
 
 import static io.reactivex.Completable.fromSingle;
-import static io.turbine.core.deployment.VerticleFactory.factory;
+import static io.reactivex.Single.just;
 
-public abstract class BaseWebSocketLadder<S, R, B> extends BaseWebSocketVerticle<S, R, B>
-        implements WebSocketLadder<S, R, B>, HttpVerticle
-{
-    private static final long KEEP_IDLE_ROOMS = 5 * 1000;
+public abstract class BaseWebSocketLadder<S extends JsonSerializable, R, B>
+        extends BaseWebSocketVerticle<S, R, B>
+        implements WebSocketLadder<S, R, B>, HttpVerticle {
+    private static final long KEEP_IDLE_ROOMS = 3600 * 1000;
 
     class DelegateHttpVerticle extends BaseHttpVerticle {
         @Override
@@ -43,7 +44,7 @@ public abstract class BaseWebSocketLadder<S, R, B> extends BaseWebSocketVerticle
         public void init(Vertx vertx, Context context) {
             super.init(vertx, context);
             setLoggerName(BaseWebSocketLadder.this.getClass().getSimpleName()
-                + "'s HTTP server");
+                    + "'s HTTP server");
         }
     }
 
@@ -67,17 +68,17 @@ public abstract class BaseWebSocketLadder<S, R, B> extends BaseWebSocketVerticle
             handleWebSocketConnection(ws, null);
         } else {
             register(accepts(ws).subscribe(
-                sender -> {
-                    try {
-                        if (sender == null)
-                            throw new UnsupportedOperationException("anonymous connections are not allowed");
+                    sender -> {
+                        try {
+                            if (sender == null)
+                                throw new UnsupportedOperationException("anonymous connections are not allowed");
 
-                        handleWebSocketConnection(ws, sender);
-                    } catch (Exception ex) {
-                        rejectConnection(ws, ex);
-                    }
-                },
-                ex -> rejectConnection(ws, ex)
+                            handleWebSocketConnection(ws, sender);
+                        } catch (Exception ex) {
+                            rejectConnection(ws, ex);
+                        }
+                    },
+                    ex -> rejectConnection(ws, ex)
             ));
         }
     }
@@ -92,23 +93,24 @@ public abstract class BaseWebSocketLadder<S, R, B> extends BaseWebSocketVerticle
 
         try {
             R roomId = getRoomIdentifier(ws);
-            WebSocketRoom<S, R, B> room;
+            Single<WebSocketRoom<S, R, B>> room;
 
             if (rooms.containsKey(roomId)) {
-                room = rooms.get(roomId);
+                room = just(rooms.get(roomId));
             } else {
-                room = roomFactory().apply(this, roomId);
-                /* FIXME:  use deployer to deploy room verticle */
-               // deployVerticle(roomFactory())
-                register(
-                        room.disconnections().subscribe(connections::remove),
-                        room.rxStart().subscribe(() -> rooms.put(roomId, room)),
-                        room.emptySignal()
-                                .delay(keepIdleRooms(), TimeUnit.MILLISECONDS)
-                                .subscribe(() -> this.clearRoom(roomId))
-                );
+                room = deployer().deployVerticle(() -> roomFactory().apply(this, roomId), null)
+                        .map(r -> {
+                            register(
+                                    r.disconnections().subscribe(connections::remove),
+                                    r.rxStart().subscribe(() -> rooms.put(roomId, r)),
+                                    r.emptySignal()
+                                            .delay(keepIdleRooms(), TimeUnit.MILLISECONDS)
+                                            .subscribe(() -> this.clearRoom(roomId))
+                            );
+                            return r;
+                        });
             }
-            room.connect(conn);
+            register(room.subscribe(r -> r.connect(conn)));
         } catch (Exception ex) {
             logger.error("Cannot open the room.", ex);
         }
@@ -118,8 +120,8 @@ public abstract class BaseWebSocketLadder<S, R, B> extends BaseWebSocketVerticle
     private void clearRoom(R roomId) {
         logger.info("Room {} was empty for {} ms so it was destroyed.", roomId.toString(), KEEP_IDLE_ROOMS);
         try {
-            rooms.get(roomId).rxStop()
-                    .subscribe(() -> rooms.remove(roomId));
+            register(rooms.get(roomId).rxStop()
+                    .subscribe(() -> rooms.remove(roomId)));
         } catch (Exception ex) {
             logger.error("The verticle for room {} could not stop properly", roomId);
         }
@@ -128,11 +130,9 @@ public abstract class BaseWebSocketLadder<S, R, B> extends BaseWebSocketVerticle
     @Override
     public Completable rxStart() {
         return super.rxStart().concatWith(
-                /** FIXME: Call to the deployer **/
-            fromSingle(
-                deployer().deployVerticle(
-                        factory(DelegateHttpVerticle::new, DelegateHttpVerticle.class), config())
-            ));
+                fromSingle(
+                        deployer().deployVerticle(DelegateHttpVerticle::new, config())
+                ));
     }
 
     @Override

@@ -1,6 +1,7 @@
 package io.turbine.core.verticles.behaviors;
 
 import io.reactivex.Single;
+import io.turbine.core.json.JsonSerializable;
 import io.turbine.core.utils.rxcollection.observers.ReactiveMapObserver;
 import io.vertx.reactivex.core.http.ServerWebSocket;
 
@@ -16,7 +17,7 @@ import io.vertx.reactivex.core.http.ServerWebSocket;
  * @param <B> The type of the message (B)ody
  * @author Fabien <fabien DOT lehouedec AT gmail DOT com>
  */
-public interface WebSocketLadder<S, R, B> extends WebSocketVerticle<S, B> {
+public interface WebSocketLadder<S extends JsonSerializable, R, B> extends WebSocketVerticle<S, B> {
 
     /**
      * The map observer of the ladder rooms pool.

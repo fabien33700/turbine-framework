@@ -1,6 +1,7 @@
 package io.turbine.core.verticles.behaviors;
 
 import io.reactivex.Observable;
+import io.turbine.core.json.JsonSerializable;
 import io.turbine.core.ws.Message;
 import io.turbine.core.ws.WsConnection;
 
@@ -22,7 +23,7 @@ import io.turbine.core.ws.WsConnection;
  *
  * @author Fabien <fabien DOT lehouedec AT gmail DOT com>
  */
-public interface WebSocketVerticle<S, B> extends Verticle {
+public interface WebSocketVerticle<S extends JsonSerializable, B> extends Verticle {
 
     /**
      * Send a message to all the clients.

@@ -39,7 +39,5 @@ class UtilsTest {
                 params.keySet(), containsInAnyOrder("name", "age"));
         assertThat("param 'name' value must be 'Steven'", params.get("name"), is("Steven"));
         assertThat("param 'age' value must be 35", params.get("age"), is(35));
-
-        // FIXME Cover all standard cases
     }
 }

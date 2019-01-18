@@ -1,6 +1,7 @@
 package io.turbine.core.ws;
 
 import io.reactivex.functions.BiFunction;
+import io.turbine.core.json.JsonSerializable;
 import io.turbine.core.verticles.behaviors.WebSocketLadder;
 import io.turbine.core.verticles.behaviors.WebSocketRoom;
 
@@ -11,5 +12,5 @@ import io.turbine.core.verticles.behaviors.WebSocketRoom;
  * @author Fabien <fabien DOT lehouedec AT gmail DOT com>
  */
 @FunctionalInterface
-public interface RoomFactory<S, R, B> extends
-        BiFunction<WebSocketLadder<S, R, B>, R, WebSocketRoom<S, R, B>> {}
+public interface RoomFactory<S extends JsonSerializable, R, B>
+        extends BiFunction<WebSocketLadder<S, R, B>, R, WebSocketRoom<S, R, B>> {}

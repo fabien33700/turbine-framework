@@ -1,12 +1,13 @@
 package io.turbine.core.ws.impl;
 
+import io.turbine.core.json.JsonSerializable;
 import io.turbine.core.ws.WsConnection;
 import io.vertx.reactivex.core.http.ServerWebSocket;
 
 import java.time.Instant;
 import java.util.Objects;
 
-public final class WsConnectionImpl<S> implements WsConnection<S> {
+public final class WsConnectionImpl<S extends JsonSerializable> implements WsConnection<S> {
 
     private final S sender;
     private final ServerWebSocket webSocket;

@@ -11,7 +11,7 @@ import java.time.Instant;
  * @param <B> The type of the message (B)ody
  * @author Fabien <fabien DOT lehouedec AT gmail DOT com>
  */
-public interface Message<S, B> extends JsonSerializable {
+public interface Message<S extends JsonSerializable, B> extends JsonSerializable {
     /**
      * The moment the message had been received.
      * @return An Instant

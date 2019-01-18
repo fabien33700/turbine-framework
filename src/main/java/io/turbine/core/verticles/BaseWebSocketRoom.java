@@ -3,6 +3,7 @@ package io.turbine.core.verticles;
 import io.reactivex.Completable;
 import io.turbine.core.errors.exceptions.ws.WebSocketException;
 import io.turbine.core.json.JsonFormat;
+import io.turbine.core.json.JsonSerializable;
 import io.turbine.core.verticles.behaviors.WebSocketLadder;
 import io.turbine.core.verticles.behaviors.WebSocketRoom;
 import io.turbine.core.ws.Message;
@@ -14,7 +15,7 @@ import io.vertx.core.json.JsonObject;
 import static io.turbine.core.utils.Utils.Reactive.completeOnFirst;
 import static java.util.Objects.requireNonNull;
 
-public abstract class BaseWebSocketRoom<S, R, B>
+public abstract class BaseWebSocketRoom<S extends JsonSerializable, R, B>
         extends BaseWebSocketVerticle<S, R, B> implements WebSocketRoom<S, R, B> {
 
     protected final WebSocketLadder<S, R, B> ladder;
@@ -60,11 +61,13 @@ public abstract class BaseWebSocketRoom<S, R, B>
     protected abstract B parseMessage(final JsonObject source);
 
     @Override
-    public void connect(WsConnection<S> connection) throws WebSocketException {
+    public void connect(WsConnection<S> conn) throws WebSocketException {
         if (capacity > 0 && occupation() >= capacity) {
             throw new WebSocketException("The room " + roomIdentifier + " is full.");
         }
-        connections.add(connection);
+        logger.debug("Sender {} with address {} had just connected to the room {}.",
+                conn.sender(), conn.webSocket().remoteAddress(), identifier());
+        connections.add(conn);
     }
 
     @Override

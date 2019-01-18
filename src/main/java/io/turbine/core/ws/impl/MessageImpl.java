@@ -1,13 +1,14 @@
 package io.turbine.core.ws.impl;
 
 import io.turbine.core.json.JsonFormat;
+import io.turbine.core.json.JsonSerializable;
 import io.turbine.core.ws.Message;
 import io.turbine.core.ws.WsConnection;
 import io.vertx.core.json.JsonObject;
 
 import java.time.Instant;
 
-public final class MessageImpl<S, B> implements Message<S, B> {
+public final class MessageImpl<S extends JsonSerializable, B> implements Message<S, B> {
 
     private final B body;
     private final WsConnection<S> connection;
@@ -36,9 +37,10 @@ public final class MessageImpl<S, B> implements Message<S, B> {
 
     @Override
     public JsonObject toJson() {
-        return JsonFormat.Builder.json(
-            new String[] { "sender", "sentAt", "body" },
-            new Object[] { sender(), sentAt(), body() }
-        );
+        return JsonFormat.Builder.create()
+                .put("sender", sender().toJson())
+                .put("sentAt", sentAt)
+                .put("body", body)
+            .build();
     }
 }

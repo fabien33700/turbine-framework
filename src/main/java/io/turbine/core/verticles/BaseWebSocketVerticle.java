@@ -3,6 +3,7 @@ package io.turbine.core.verticles;
 import io.reactivex.Observable;
 import io.reactivex.subjects.BehaviorSubject;
 import io.reactivex.subjects.Subject;
+import io.turbine.core.json.JsonSerializable;
 import io.turbine.core.utils.rxcollection.ReactiveList;
 import io.turbine.core.utils.rxcollection.events.ListEvent;
 import io.turbine.core.utils.rxcollection.impl.ReactiveListImpl;
@@ -10,7 +11,10 @@ import io.turbine.core.verticles.behaviors.WebSocketVerticle;
 import io.turbine.core.ws.Message;
 import io.turbine.core.ws.WsConnection;
 
-public abstract class BaseWebSocketVerticle<S, R, B> extends BaseVerticle
+import java.util.Objects;
+
+public abstract class BaseWebSocketVerticle<S extends JsonSerializable, R, B>
+        extends BaseVerticle
         implements WebSocketVerticle<S, B>
 {
     protected final ReactiveList<WsConnection<S>> connections = new ReactiveListImpl<>();
@@ -20,7 +24,7 @@ public abstract class BaseWebSocketVerticle<S, R, B> extends BaseVerticle
 
     @Override
     public Observable<Message<S, B>> messages() {
-        return messages;
+        return messages.filter(Objects::nonNull).filter(m -> m.body() != null);
     }
 
     @Override
